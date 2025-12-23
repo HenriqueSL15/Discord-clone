@@ -3,23 +3,11 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { register } from "../actions/auth";
 
 export default function RegisterPage() {
   const [isHidden, setIsHidden] = useState(true);
   const router = useRouter();
-
-  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const data = new FormData(e.currentTarget);
-    const email = data.get("email");
-    const username = data.get("username");
-    const password = data.get("password");
-
-    console.log(
-      `Email: ${email}\nUsername: ${username}\nPassword: ${password}`
-    );
-  };
 
   return (
     <div className="w-full h-screen flex justify-center items-center bg-linear-to-br from-[#202442] to-[#121317]">
@@ -30,7 +18,7 @@ export default function RegisterPage() {
           <h2 className="text-[#6a87a3] ">Junte-se a nós!</h2>
         </div>
         <form
-          onSubmit={handleRegister}
+          action={register}
           className="text-start w-[80%] flex flex-col gap-3"
         >
           <div className="flex flex-col gap-1.5">

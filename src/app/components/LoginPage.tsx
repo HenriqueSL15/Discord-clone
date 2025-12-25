@@ -2,20 +2,11 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { login } from "../actions/auth";
 
 export default function LoginPage() {
   const [isHidden, setIsHidden] = useState(true);
   const router = useRouter();
-
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const data = new FormData(e.currentTarget);
-    const email = data.get("email");
-    const password = data.get("password");
-
-    console.log(`Email: ${email}\nPassword: ${password}`);
-  };
 
   return (
     <div className="w-full h-screen flex justify-center items-center bg-linear-to-br from-[#202442] to-[#121317]">
@@ -30,7 +21,9 @@ export default function LoginPage() {
           </h2>
         </div>
         <form
-          onSubmit={handleLogin}
+          action={async (formData) => {
+            await login(formData);
+          }}
           className="text-start w-[80%] flex flex-col gap-3"
         >
           <div className="flex flex-col gap-1.5">

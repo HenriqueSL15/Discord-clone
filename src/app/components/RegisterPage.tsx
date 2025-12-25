@@ -18,7 +18,9 @@ export default function RegisterPage() {
           <h2 className="text-[#6a87a3] ">Junte-se a nós!</h2>
         </div>
         <form
-          action={register}
+          action={async (formData) => {
+            await register(formData);
+          }}
           className="text-start w-[80%] flex flex-col gap-3"
         >
           <div className="flex flex-col gap-1.5">

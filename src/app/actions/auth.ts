@@ -34,6 +34,45 @@ export async function register(formData: FormData) {
   redirect("/");
 }
 
+export async function login(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new Error();
+    }
+
+    const isPasswordCorrect = bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      throw new Error();
+    }
+
+    const expires = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const session = await encrypt({ userId: user.id, expires });
+
+    const cookieStore = await cookies();
+    cookieStore.set("session", session, { expires, httpOnly: true });
+  } catch (err) {
+    return { error: "E-mail ou Senha errados" };
+  }
+
+  redirect("/");
+}
+
+export async function logoff() {
+  const cookieStore = await cookies();
+  cookieStore.delete("session");
+
+  redirect("/login");
+}
+
 export async function getUserInfo() {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;

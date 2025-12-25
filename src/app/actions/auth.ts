@@ -2,7 +2,7 @@
 
 import prisma from "../lib/prisma";
 import bcrypt from "bcryptjs";
-import { encrypt } from "../lib/auth";
+import { decrypt, encrypt } from "../lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -31,14 +31,27 @@ export async function register(formData: FormData) {
     return { error: "E-mail ou Usuário já existe" };
   }
 
-  console.log(
-    `Email: ${email}\nUsername: ${username}\nPassword: ${password}\n`
-  );
+  redirect("/");
+}
 
-  console.log(
-    "TESTE CONEXÃO:",
-    process.env.DATABASE_URL ? "URL encontrada! ✅" : "URL vazia! ❌"
-  );
+export async function getUserInfo() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
 
-  //   redirect("/chat");
+  if (!token) {
+    return null;
+  }
+
+  const sessionData = await decrypt(token);
+  if (!sessionData || !sessionData.userId) {
+    return null;
+  }
+
+  const userData = await prisma.user.findUnique({
+    where: {
+      id: sessionData.userId,
+    },
+  });
+
+  return userData;
 }

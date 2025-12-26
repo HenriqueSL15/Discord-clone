@@ -6,10 +6,34 @@ datasource db {
   provider = "postgresql"
 }
 
+enum FriendshipStatus{
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  username  String    @unique
-  password  String
-  createdAt DateTime  @default(now())
+  id                String            @id @default(uuid())
+  email             String            @unique
+  username          String            @unique
+  password          String
+  createdAt         DateTime          @default(now())
+
+  sentRequests      Friendship[]      @relation("sender")
+  receivedRequests  Friendship[]      @relation("receiver")
+}
+
+model Friendship{
+  id                String            @id @default(uuid())
+  status            FriendshipStatus  @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  senderId          String
+  sender            User              @relation("sender", fields: [senderId], references: [id])
+
+  receiverId        String
+  receiver          User              @relation("receiver", fields: [receiverId], references: [id])
+
+  @@unique ([senderId, receiverId])
 }

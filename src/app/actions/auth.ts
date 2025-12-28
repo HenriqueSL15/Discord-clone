@@ -34,7 +34,9 @@ export async function register(formData: FormData) {
   redirect("/");
 }
 
-export async function login(formData: FormData) {
+export async function login(
+  formData: FormData
+): Promise<UserInterface | { error: string }> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -49,7 +51,7 @@ export async function login(formData: FormData) {
       throw new Error();
     }
 
-    const isPasswordCorrect = bcrypt.compare(password, user.password);
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       throw new Error();
     }
@@ -62,8 +64,12 @@ export async function login(formData: FormData) {
   } catch (err) {
     return { error: "E-mail ou Senha errados" };
   }
+  const res = await getUserInfo();
+  if (!res) {
+    return { error: "Não foi possível obter as informações do usuário" };
+  }
 
-  redirect("/");
+  return res;
 }
 
 export async function logoff() {
@@ -73,7 +79,7 @@ export async function logoff() {
   redirect("/login");
 }
 
-export async function getUserInfo() {
+export async function getUserInfo(): Promise<UserInterface | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 
@@ -92,5 +98,9 @@ export async function getUserInfo() {
     },
   });
 
-  return userData;
+  if (!userData) return null;
+
+  const { password, ...userWithoutPassword } = userData;
+
+  return userWithoutPassword;
 }

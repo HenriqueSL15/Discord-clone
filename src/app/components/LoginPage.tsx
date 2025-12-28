@@ -3,10 +3,12 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { login } from "../actions/auth";
+import { useUserStore } from "../store/useUserStore";
 
 export default function LoginPage() {
   const [isHidden, setIsHidden] = useState(true);
   const router = useRouter();
+  const updateUser = useUserStore((state) => state.setUser);
 
   return (
     <div className="w-full h-screen flex justify-center items-center bg-linear-to-br from-[#202442] to-[#121317]">
@@ -22,7 +24,14 @@ export default function LoginPage() {
         </div>
         <form
           action={async (formData) => {
-            await login(formData);
+            const res = await login(formData);
+
+            if ("error" in res) {
+              console.log("HOUVE UM ERRO NO LOGIN");
+            } else {
+              updateUser(res);
+              router.push("/");
+            }
           }}
           className="text-start w-[80%] flex flex-col gap-3"
         >

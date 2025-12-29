@@ -34,6 +34,30 @@ export async function register(formData: FormData) {
   redirect("/");
 }
 
+export async function addFriend(senderId: string, formData: FormData) {
+  const receiverUsername = formData.get("searchInput") as string;
+
+  try {
+    const receiverUser = await prisma.user.findUnique({
+      where: {
+        username: receiverUsername,
+      },
+    });
+
+    const friendship = await prisma.friendship.create({
+      data: {
+        receiverId: receiverUser?.id ? receiverUser.id : "",
+        senderId,
+      },
+    });
+
+    return friendship;
+  } catch (err) {
+    console.log(err);
+    return { error: "Erro ao criar amizade" };
+  }
+}
+
 export async function login(
   formData: FormData
 ): Promise<UserInterface | { error: string }> {

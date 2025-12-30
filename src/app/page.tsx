@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getUserInfo } from "./actions/auth";
+import { getUserFriendships, getUserInfo } from "./actions/auth";
 import FriendsButton from "./components/FriendsButton";
 import FriendsList from "./components/FriendsList";
 import UserInfo from "./components/UserInfo";
@@ -11,11 +11,16 @@ export default async function Home() {
     redirect("/login");
   }
 
+  let friendships = await getUserFriendships();
+  if (!friendships) {
+    friendships = null;
+  }
+
   return (
     <div className="flex h-screen">
       <div className="bg-[#16181d]/95 w-1/5 flex flex-col  p-3">
         <FriendsButton />
-        <FriendsList />
+        <FriendsList friendships={friendships} />
         <UserInfo />
       </div>
       <SelectedPage />

@@ -6,10 +6,12 @@ import SearchInput from "./SearchInput";
 import AddFriendPage from "./AddFriendPage";
 import { addFriend } from "../actions/auth";
 import { useUserStore } from "../store/useUserStore";
+import { FriendshipWithUsers } from "../types/FriendshipInterface";
 
 export default function FriendsPage() {
   const [selectedOption, setSelectedOption] = useState(0);
   const user = useUserStore((state) => state.user);
+  let friendships = useUserStore((state) => state.friendships);
   const [search, setSearch] = useState("");
 
   const texts = ["Online", "Todos", "Pendente", "Bloqueado"];
@@ -21,6 +23,17 @@ export default function FriendsPage() {
       console.log("YEY");
     }
   };
+
+  if (!friendships) {
+    friendships = [];
+  }
+
+  const filteredFriendships = friendships?.filter(
+    (friendship: FriendshipWithUsers) =>
+      params[selectedOption] != ""
+        ? friendship.status == params[selectedOption]
+        : true
+  );
 
   return (
     <div className="w-4/5 bg-[#1b1c22] h-screen">
@@ -40,7 +53,11 @@ export default function FriendsPage() {
                 setSelectedOption={setSelectedOption}
                 id={i}
                 text={texts[i]}
-                number={i}
+                number={
+                  friendships?.filter((friendship: FriendshipWithUsers) =>
+                    params[i] != "" ? friendship.status == params[i] : true
+                  ).length
+                }
               />
             );
           })}
@@ -64,7 +81,7 @@ export default function FriendsPage() {
             setSearch={setSearch}
           />
         ) : (
-          <SearchInput param={params[selectedOption]} />
+          <SearchInput filteredFriendships={filteredFriendships} />
         )}
       </div>
     </div>

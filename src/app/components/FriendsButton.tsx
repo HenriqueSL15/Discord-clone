@@ -1,6 +1,6 @@
 "use client";
 import { Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useUserStore } from "../store/useUserStore";
 export default function FriendsButton() {
   const [clicked, setClicked] = useState(false);

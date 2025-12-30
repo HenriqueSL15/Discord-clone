@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { decrypt, encrypt } from "../lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { FriendshipWithUsers } from "../types/FriendshipInterface";
 
 export async function register(formData: FormData) {
   const email = formData.get("email") as string;
@@ -127,4 +128,55 @@ export async function getUserInfo(): Promise<UserInterface | null> {
   const { password, ...userWithoutPassword } = userData;
 
   return userWithoutPassword;
+}
+
+export async function getUserFriendships(): Promise<
+  FriendshipWithUsers[] | null
+> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  const sessionData = await decrypt(token);
+
+  if (!sessionData || !sessionData.userId) {
+    return null;
+  }
+
+  try {
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        OR: [
+          { receiverId: sessionData.userId },
+          { senderId: sessionData.userId },
+        ],
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    return friendships;
+  } catch (err) {
+    console.log("Erro ao obter as amizades do usuário");
+    return null;
+  }
 }

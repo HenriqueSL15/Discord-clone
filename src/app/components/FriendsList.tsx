@@ -1,7 +1,21 @@
 "use client";
+import { useEffect } from "react";
 import { useUserStore } from "../store/useUserStore";
-export default function FriendsList() {
+import { FriendshipWithUsers } from "../types/FriendshipInterface";
+export default function FriendsList({
+  friendships,
+}: {
+  friendships: FriendshipWithUsers[] | null;
+}) {
   const user = useUserStore((state) => state.user);
+  const setFriendships = useUserStore((state) => state.setFriendships);
+  
+  useEffect(() => {
+    if (friendships) {
+      setFriendships(friendships);
+    }
+  }, [friendships, setFriendships]);
+
   const updatePage = useUserStore((state) => state.setPage);
 
   return (

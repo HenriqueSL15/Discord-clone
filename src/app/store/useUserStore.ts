@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { FriendshipWithUsers } from "../types/FriendshipInterface";
+import { FriendshipWithUsers } from "../types/Friendship";
 
 interface UserState {
   user: UserInterface | null;

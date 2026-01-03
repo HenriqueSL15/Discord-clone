@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useUserStore } from "../store/useUserStore";
-import { FriendshipWithUsers } from "../types/FriendshipInterface";
+import { FriendshipWithUsers } from "../types/Friendship";
 
 export default function SearchInput({
   filteredFriendships,
@@ -21,7 +21,10 @@ export default function SearchInput({
       <div className="flex flex-col">
         {filteredFriendships?.map((friendship: FriendshipWithUsers, index) => {
           return (
-            <div key={index} className="flex gap-3 items-center">
+            <button
+              key={index}
+              className="flex gap-3 items-center hover:cursor-pointer"
+            >
               <div className="relative w-15 h-15 bg-black rounded-full">
                 <div className="absolute right-0 bottom-0 w-3 h-3 bg-white rounded-full"></div>
               </div>
@@ -30,7 +33,7 @@ export default function SearchInput({
                   ? friendship.receiver.username
                   : friendship.sender.username}
               </h1>
-            </div>
+            </button>
           );
         })}
       </div>

@@ -6,7 +6,7 @@ import SearchInput from "./SearchInput";
 import AddFriendPage from "./AddFriendPage";
 import { addFriend } from "../actions/auth";
 import { useUserStore } from "../store/useUserStore";
-import { FriendshipWithUsers } from "../types/FriendshipInterface";
+import { FriendshipWithUsers } from "../types/Friendship";
 
 export default function FriendsPage() {
   const [selectedOption, setSelectedOption] = useState(0);
@@ -32,7 +32,7 @@ export default function FriendsPage() {
     (friendship: FriendshipWithUsers) =>
       params[selectedOption] != ""
         ? friendship.status == params[selectedOption]
-        : true
+        : friendship.status != "PENDING"
   );
 
   return (
@@ -55,7 +55,9 @@ export default function FriendsPage() {
                 text={texts[i]}
                 number={
                   friendships?.filter((friendship: FriendshipWithUsers) =>
-                    params[i] != "" ? friendship.status == params[i] : true
+                    params[i] != ""
+                      ? friendship.status == params[i]
+                      : friendship.status != "PENDING"
                   ).length
                 }
               />

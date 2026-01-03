@@ -5,7 +5,8 @@ import bcrypt from "bcryptjs";
 import { decrypt, encrypt } from "../lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { FriendshipWithUsers } from "../types/FriendshipInterface";
+import { FriendshipWithUsers } from "../types/Friendship";
+import { MessageWithUsers } from "../types/Message";
 
 export async function register(formData: FormData) {
   const email = formData.get("email") as string;
@@ -54,8 +55,7 @@ export async function addFriend(senderId: string, formData: FormData) {
 
     return friendship;
   } catch (err) {
-    console.log(err);
-    return { error: "Erro ao criar amizade" };
+    console.log("Erro ao criar amizade", err);
   }
 }
 
@@ -178,5 +178,76 @@ export async function getUserFriendships(): Promise<
   } catch (err) {
     console.log("Erro ao obter as amizades do usuário");
     return null;
+  }
+}
+
+export async function getMessagesHistory(
+  senderId: string | undefined,
+  receiverId: string
+): Promise<MessageWithUsers[] | []> {
+  if (!senderId) {
+    throw new Error("Sender Id é undefined");
+  }
+  try {
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          {
+            senderId: senderId,
+            receiverId: receiverId,
+          },
+          {
+            senderId: receiverId,
+            receiverId: senderId,
+          },
+        ],
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    return messages;
+  } catch (err) {
+    console.log("Erro ao buscar o histórico das mensagens", err);
+  }
+  return [];
+}
+
+export async function sendMessage(
+  senderId: string | undefined,
+  receiverId: string,
+  message: string
+) {
+  if (!senderId) {
+    throw new Error("Id do sender é undefined");
+  }
+  try {
+    const createdMessage = await prisma.message.create({
+      data: {
+        senderId,
+        receiverId: "325f6692-47dd-4b2e-ad70-390726568c07",
+        message,
+      },
+    });
+
+    return createdMessage;
+  } catch (err) {
+    console.log("Erro ao criar mensagem", err);
   }
 }

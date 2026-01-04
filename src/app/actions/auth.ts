@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { FriendshipWithUsers } from "../types/Friendship";
 import { MessageWithUsers } from "../types/Message";
+import { pusherServer } from "../lib/pusher";
 
 export async function register(formData: FormData) {
   const email = formData.get("email") as string;
@@ -130,6 +131,22 @@ export async function getUserInfo(): Promise<UserInterface | null> {
   return userWithoutPassword;
 }
 
+export async function getOtherUserInfo(
+  id: string
+): Promise<UserInterface | null> {
+  const userData = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!userData) return null;
+
+  const { password, ...userWithoutPassword } = userData;
+
+  return userWithoutPassword;
+}
+
 export async function getUserFriendships(): Promise<
   FriendshipWithUsers[] | null
 > {
@@ -232,7 +249,8 @@ export async function getMessagesHistory(
 export async function sendMessage(
   senderId: string | undefined,
   receiverId: string,
-  message: string
+  message: string,
+  friendshipId: string
 ) {
   if (!senderId) {
     throw new Error("Id do sender é undefined");
@@ -241,10 +259,36 @@ export async function sendMessage(
     const createdMessage = await prisma.message.create({
       data: {
         senderId,
-        receiverId: "325f6692-47dd-4b2e-ad70-390726568c07",
+        receiverId,
         message,
       },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+      },
     });
+
+    if (createdMessage) {
+      await pusherServer.trigger(
+        `${friendshipId}`,
+        "new-message",
+        createdMessage
+      );
+    }
 
     return createdMessage;
   } catch (err) {

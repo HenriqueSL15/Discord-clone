@@ -1,8 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getMessagesHistory, sendMessage } from "../actions/auth";
+import {
+  getMessagesHistory,
+  getOtherUserInfo,
+  getUserFriendships,
+  sendMessage,
+} from "../actions/auth";
 import { MessageWithUsers } from "../types/Message";
 import { useUserStore } from "../store/useUserStore";
+import { pusherClient } from "../lib/pusher-client";
+import { FriendshipWithUsers } from "../types/Friendship";
 
 export default function PrivateChat({
   otherUserId,
@@ -10,27 +17,62 @@ export default function PrivateChat({
   otherUserId: string | null;
 }) {
   const user = useUserStore((state) => state.user);
+  const [otherUser, setOtherUser] = useState<UserInterface>();
   const [inputValue, setInputValue] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<MessageWithUsers[]>([]);
+  const [friendshipId, setFriendshipId] = useState("");
 
   useEffect(() => {
     if (!otherUserId) {
       return;
     }
+
+    let channel: any;
+
     const fetchHistory = async () => {
       const res = await getMessagesHistory(user?.id, otherUserId);
+      const otherUserInfo = await getOtherUserInfo(otherUserId);
+      const friendships = await getUserFriendships();
+
+      if (otherUserInfo) {
+        setOtherUser(otherUserInfo);
+      }
+
+      if (friendships) {
+        const currentFriendship = friendships.find(
+          (friendship: FriendshipWithUsers) =>
+            friendship.senderId == otherUserInfo?.id ||
+            friendship.receiverId == otherUserInfo?.id
+        );
+
+        if (currentFriendship) {
+          setFriendshipId(currentFriendship.id);
+          channel = pusherClient.subscribe(`${currentFriendship.id}`);
+
+          channel.bind("new-message", (data: MessageWithUsers) => {
+            setMessages((prev) => [...prev, data]);
+          });
+        }
+      }
 
       setMessages(res);
     };
 
     fetchHistory();
-  }, []);
+
+    return () => {
+      if (channel) {
+        channel.unbind("new-message");
+        pusherClient.unsubscribe(`${channel.name}`);
+      }
+    };
+  }, [otherUserId, user?.id]);
 
   return (
     <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end">
       <div className="flex flex-col gap-3 w-full flex-1 p-3">
         {messages.map((message: MessageWithUsers, i: number) => {
-          const fullDate = message.createdAt.toLocaleString();
+          const fullDate = new Date(message.createdAt).toLocaleString();
           const date = fullDate.split(",")[0];
           const time = fullDate
             .split(",")[1]
@@ -60,8 +102,10 @@ export default function PrivateChat({
           const res = await sendMessage(
             user?.id,
             otherUserId as string,
-            inputValue
+            inputValue,
+            friendshipId
           );
+
           if ("error" in res) {
             console.log("deu erro");
           } else {
@@ -73,7 +117,9 @@ export default function PrivateChat({
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.currentTarget.value)}
-          placeholder={`Conversar com fulano de tal`}
+          placeholder={`Conversar com ${
+            otherUser ? otherUser.username : "o usuário"
+          }`}
           className="bg-[#21232b] w-full p-3 rounded-lg text-[#8aabc8] font-semibold outline-none text-lg"
         />
       </form>

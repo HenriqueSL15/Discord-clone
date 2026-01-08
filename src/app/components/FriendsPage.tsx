@@ -29,10 +29,20 @@ export default function FriendsPage() {
   }
 
   const filteredFriendships = friendships?.filter(
-    (friendship: FriendshipWithUsers) =>
-      params[selectedOption] != ""
-        ? friendship.status == params[selectedOption]
-        : friendship.status != "PENDING"
+    (friendship: FriendshipWithUsers) => {
+      if (params[selectedOption] != "") {
+        if (params[selectedOption] == "PENDING") {
+          return (
+            friendship.status == params[selectedOption] &&
+            user?.id != friendship.senderId
+          );
+        } else {
+          return friendship.status == params[selectedOption];
+        }
+      } else {
+        return friendship.status != "PENDING" && friendship.status != "BLOCKED";
+      }
+    }
   );
 
   return (
@@ -54,11 +64,23 @@ export default function FriendsPage() {
                 id={i}
                 text={texts[i]}
                 number={
-                  friendships?.filter((friendship: FriendshipWithUsers) =>
-                    params[i] != ""
-                      ? friendship.status == params[i]
-                      : friendship.status != "PENDING"
-                  ).length
+                  friendships?.filter((friendship: FriendshipWithUsers) => {
+                    if (params[i] != "") {
+                      if (params[i] == "PENDING") {
+                        return (
+                          friendship.status == params[i] &&
+                          user?.id != friendship.senderId
+                        );
+                      } else {
+                        return friendship.status == params[i];
+                      }
+                    } else {
+                      return (
+                        friendship.status != "PENDING" &&
+                        friendship.status != "BLOCKED"
+                      );
+                    }
+                  }).length
                 }
               />
             );

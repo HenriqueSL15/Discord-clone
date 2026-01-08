@@ -17,13 +17,15 @@ export default function FriendsList({
   }, [friendships, setFriendships]);
 
   const updatePage = useUserStore((state) => state.setPage);
+  const validFriendships = friendships?.filter(
+    (f) => f.status != "PENDING" && f.status != "BLOCKED"
+  );
 
   return (
     <div className="w-full flex-1 p-3">
       <h1 className="text-[#6f7c8c] font-bold text-lg">MENSAGENS DIRETAS</h1>
       <div className="w-full flex-1 flex flex-col mt-3 gap-2">
-        {friendships?.map((friendship: FriendshipWithUsers, i: number) => {
-          // console.log(friendship.receiver.id, friendship.sender.id);
+        {validFriendships?.map((friendship: FriendshipWithUsers, i: number) => {
           return (
             <button
               key={i}

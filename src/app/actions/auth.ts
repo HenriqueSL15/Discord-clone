@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { FriendshipWithUsers } from "../types/Friendship";
 import { MessageWithUsers } from "../types/Message";
 import { pusherServer } from "../lib/pusher";
+import { FriendshipStatus } from "@prisma/client";
 
 export async function register(formData: FormData) {
   const email = formData.get("email") as string;
@@ -293,5 +294,77 @@ export async function sendMessage(
     return createdMessage;
   } catch (err) {
     console.log("Erro ao criar mensagem", err);
+  }
+}
+
+export async function changeFriendshipStatus(
+  val: FriendshipStatus | "DELETE",
+  friendshipId: string
+): FriendshipWithUsers {
+  try {
+    if (val == "DELETE") {
+      const deletedFriendship = await prisma.friendship.delete({
+        where: {
+          id: friendshipId,
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              createdAt: true,
+            },
+          },
+          receiver: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              createdAt: true,
+            },
+          },
+        },
+      });
+
+      return deletedFriendship;
+    }
+
+    const validOptions = ["ACCEPTED", "BLOCKED", "PENDING"];
+
+    if (!validOptions.includes(val)) {
+      throw new Error();
+    }
+
+    const updatedFriendship = await prisma.friendship.update({
+      where: {
+        id: friendshipId,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            createdAt: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            createdAt: true,
+          },
+        },
+      },
+      data: {
+        status: val,
+      },
+    });
+
+    return updatedFriendship;
+  } catch (err) {
+    console.log(err);
   }
 }

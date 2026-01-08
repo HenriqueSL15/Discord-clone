@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getMessagesHistory,
   getOtherUserInfo,
@@ -22,6 +22,16 @@ export default function PrivateChat({
   const [messages, setMessages] = useState<MessageWithUsers[]>([]);
   const [friendshipId, setFriendshipId] = useState("");
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   useEffect(() => {
     if (!otherUserId) {
       return;
@@ -37,6 +47,8 @@ export default function PrivateChat({
       if (otherUserInfo) {
         setOtherUser(otherUserInfo);
       }
+
+      if (res) setMessages(res);
 
       if (friendships) {
         const currentFriendship = friendships.find(
@@ -54,8 +66,6 @@ export default function PrivateChat({
           });
         }
       }
-
-      setMessages(res);
     };
 
     fetchHistory();
@@ -69,8 +79,8 @@ export default function PrivateChat({
   }, [otherUserId, user?.id]);
 
   return (
-    <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end">
-      <div className="flex flex-col gap-3 w-full flex-1 p-3">
+    <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end h-screen">
+      <div className="flex flex-col gap-3 w-full flex-1 p-3 overflow-y-auto">
         {messages.map((message: MessageWithUsers, i: number) => {
           const fullDate = new Date(message.createdAt).toLocaleString();
           const date = fullDate.split(",")[0];
@@ -95,6 +105,7 @@ export default function PrivateChat({
             </div>
           );
         })}
+        <div ref={scrollRef}></div>
       </div>
       <form
         className="flex p-4 gap-10"
@@ -105,9 +116,12 @@ export default function PrivateChat({
             inputValue,
             friendshipId
           );
+          const inputVal = inputValue;
+          setInputValue("");
 
           if ("error" in res) {
             console.log("deu erro");
+            setInputValue(inputVal);
           } else {
             setInputValue("");
           }

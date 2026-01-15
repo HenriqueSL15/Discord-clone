@@ -92,8 +92,12 @@ export default function PrivateChat({
 
           let previousMessage = null;
           if (messages[i - 1]) {
-            const previousDay = Number(messages[i - 1].createdAt.getDate());
-            const previousMonth = Number(messages[i - 1].createdAt.getMonth());
+            const previousDay = Number(
+              new Date(messages[i - 1].createdAt).getDate()
+            );
+            const previousMonth = Number(
+              new Date(messages[i - 1].createdAt).getMonth()
+            );
 
             const currentDay = new Date(message.createdAt).getDate();
             const currentMonth = new Date(message.createdAt).getMonth();
@@ -110,8 +114,11 @@ export default function PrivateChat({
 
           let nextMessageHasAGroup = false;
 
-          if (messages[i + 1]?.senderId == message.senderId) {
-            const nextTime = messages[i + 1]?.createdAt.getTime();
+          if (
+            messages[i + 1] &&
+            messages[i + 1]?.senderId == message.senderId
+          ) {
+            const nextTime = new Date(messages[i + 1].createdAt).getTime();
             const currentTime = new Date(message.createdAt).getTime();
 
             if ((nextTime - currentTime) / 1000 < 420) {
@@ -122,7 +129,7 @@ export default function PrivateChat({
           let thisMessageHasAGroup = false;
 
           if (messages[i - 1]?.senderId == message.senderId) {
-            const previousTime = messages[i - 1]?.createdAt.getTime();
+            const previousTime = new Date(messages[i - 1]?.createdAt).getTime();
             const currentTime = new Date(message.createdAt).getTime();
 
             if ((currentTime - previousTime) / 1000 < 420) {

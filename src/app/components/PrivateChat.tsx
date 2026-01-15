@@ -48,8 +48,6 @@ export default function PrivateChat({
         setOtherUser(otherUserInfo);
       }
 
-      if (res) setMessages(res);
-
       if (friendships) {
         const currentFriendship = friendships.find(
           (friendship: FriendshipWithUsers) =>
@@ -66,6 +64,7 @@ export default function PrivateChat({
           });
         }
       }
+      if (res) setMessages(res);
     };
 
     fetchHistory();
@@ -80,9 +79,10 @@ export default function PrivateChat({
 
   return (
     <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end h-screen">
-      <div className="flex flex-col gap-3 w-full flex-1 p-3 overflow-y-auto">
+      <div className="flex flex-col w-full flex-1 p-3 overflow-y-auto">
         {messages.map((message: MessageWithUsers, i: number) => {
           const fullDate = new Date(message.createdAt).toLocaleString();
+
           const date = fullDate.split(",")[0];
           const time = fullDate
             .split(",")[1]
@@ -90,18 +90,74 @@ export default function PrivateChat({
             .split(":")[0]
             .concat(":", fullDate.split(",")[1].trim().split(":")[1]);
 
+          let previousMessage = null;
+          if (messages[i - 1]) {
+            const previousDay = Number(messages[i - 1].createdAt.getDate());
+            const previousMonth = Number(messages[i - 1].createdAt.getMonth());
+
+            const currentDay = new Date(message.createdAt).getDate();
+            const currentMonth = new Date(message.createdAt).getMonth();
+
+            if (previousDay < currentDay && previousMonth == currentMonth) {
+              previousMessage = messages[i - 1];
+            } else if (
+              previousDay > currentDay &&
+              previousMonth < currentMonth
+            ) {
+              previousMessage = messages[i - 1];
+            }
+          }
+
+          let nextMessageHasAGroup = false;
+
+          if (messages[i + 1]?.senderId == message.senderId) {
+            const nextTime = messages[i + 1]?.createdAt.getTime();
+            const currentTime = new Date(message.createdAt).getTime();
+
+            if ((nextTime - currentTime) / 1000 < 420) {
+              nextMessageHasAGroup = true;
+            }
+          }
+
+          let thisMessageHasAGroup = false;
+
+          if (messages[i - 1]?.senderId == message.senderId) {
+            const previousTime = messages[i - 1]?.createdAt.getTime();
+            const currentTime = new Date(message.createdAt).getTime();
+
+            if ((currentTime - previousTime) / 1000 < 420) {
+              thisMessageHasAGroup = true;
+            }
+          }
+
           return (
             <div
               key={i}
-              className={`text-xl p-2 break-words text-white hover:bg-[#5c7ca0]/15 text-start rounded-sm`}
+              className={`${nextMessageHasAGroup ? "mb-0" : "mb-5"}`}
             >
-              <h1 className="text-xl font-bold">
-                {message.sender.username}{" "}
-                <span className="text-sm font-normal text-[#75869f]">
-                  {date} às {time}
-                </span>
-              </h1>
-              <h1>{message.message}</h1>
+              {previousMessage && (
+                <div className="flex justify-between items-center gap-1 mb-2">
+                  <div className="w-1/2 h-px bg-[#3c3c41]"></div>
+                  <h1 className="text-[14px] text-[#85868d]">{date}</h1>
+                  <div className="w-1/2 h-px bg-[#3c3c41]"></div>
+                </div>
+              )}
+              <div
+                className={`text-xl ${
+                  !thisMessageHasAGroup ? "px-2" : "px-2"
+                } break-words text-white hover:bg-[#5c7ca0]/15 text-start rounded-sm`}
+              >
+                {!thisMessageHasAGroup && (
+                  <h1 className="text-2xl font-semibold text-[#ffffff]">
+                    {message.sender.username}{" "}
+                    <span className="text-base font-normal text-[#75869f]">
+                      {date} às {time}
+                    </span>
+                  </h1>
+                )}
+
+                <h1 className="text-[#c2c2c5] text-lg">{message.message}</h1>
+              </div>
             </div>
           );
         })}

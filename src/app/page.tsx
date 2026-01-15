@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUserFriendships, getUserInfo } from "./actions/auth";
-import FriendsButton from "./components/FriendsButton";
-import FriendsList from "./components/FriendsList";
+import FriendsButton from "./components/Sidebar/FriendsButton";
+import FriendsList from "./components/Sidebar/FriendsList";
 import UserInfo from "./components/UserInfo";
 import SelectedPage from "./components/SelectedPage";
 

@@ -1,6 +1,6 @@
 "use client";
 import { useUserStore } from "../store/useUserStore";
-import FriendsPage from "./FriendsPage";
+import FriendsPage from "./Friends Page/FriendsPage";
 import PrivateChat from "./PrivateChat";
 
 export default function SelectedPage() {

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
-import { useUserStore } from "../store/useUserStore";
-import { FriendshipWithUsers } from "../types/Friendship";
+import { useUserStore } from "../../store/useUserStore";
+import { FriendshipWithUsers } from "../../types/Friendship";
 export default function FriendsList({
   friendships,
 }: {

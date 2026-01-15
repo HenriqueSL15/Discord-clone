@@ -2,11 +2,11 @@
 import { Users } from "lucide-react";
 import FriendsPageButton from "./FriendsPageButton";
 import { useState } from "react";
-import SearchInput from "./SearchInput";
+import SearchInput from "./FriendsList";
 import AddFriendPage from "./AddFriendPage";
-import { addFriend } from "../actions/auth";
-import { useUserStore } from "../store/useUserStore";
-import { FriendshipWithUsers } from "../types/Friendship";
+import { addFriend } from "../../actions/auth";
+import { useUserStore } from "../../store/useUserStore";
+import { FriendshipWithUsers } from "../../types/Friendship";
 
 export default function FriendsPage() {
   const [selectedOption, setSelectedOption] = useState(0);
@@ -52,7 +52,9 @@ export default function FriendsPage() {
           className={`flex gap-3 w-32 text-xl items-center justify-start border-r border-[#272a32]`}
         >
           <Users color="#7588a3" />
-          <span className="text-white font-semibold">Amigos</span>
+          <span className="text-white font-semibold cursor-default">
+            Amigos
+          </span>
         </h1>
         <div className="flex gap-3">
           {Array.from({ length: 4 }).map((_, i) => {

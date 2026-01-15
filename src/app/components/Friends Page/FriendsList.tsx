@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import { useUserStore } from "../store/useUserStore";
-import { FriendshipWithUsers } from "../types/Friendship";
+import { useUserStore } from "../../store/useUserStore";
+import { FriendshipWithUsers } from "../../types/Friendship";
 import { X, Check } from "lucide-react";
-import { changeFriendshipStatus } from "../actions/auth";
+import { changeFriendshipStatus } from "../../actions/auth";
 
-export default function SearchInput({
+export default function FriendsList({
   filteredFriendships,
 }: {
   filteredFriendships: FriendshipWithUsers[];
@@ -20,6 +20,8 @@ export default function SearchInput({
       return f.sender.username.includes(search);
     }
   });
+
+  const setPage = useUserStore((state) => state.setPage);
 
   return (
     <div className="flex flex-col gap-3">
@@ -37,6 +39,16 @@ export default function SearchInput({
               className={`flex gap-3 items-center ${
                 friendship.status != "PENDING" ? "hover:cursor-pointer" : ""
               }`}
+              onClick={() => {
+                if (friendship.status == "ACCEPTED") {
+                  const otherId =
+                    friendship.senderId == user?.id
+                      ? friendship.receiverId
+                      : friendship.senderId;
+
+                  setPage(otherId);
+                }
+              }}
             >
               <div className="relative w-15 h-15 bg-black rounded-full">
                 <div className="absolute right-0 bottom-0 w-3 h-3 bg-white rounded-full"></div>

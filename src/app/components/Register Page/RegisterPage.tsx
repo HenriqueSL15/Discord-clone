@@ -1,37 +1,25 @@
 "use client";
+
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { login } from "../actions/auth";
-import { useUserStore } from "../store/useUserStore";
+import { register } from "@/app/actions/auth";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [isHidden, setIsHidden] = useState(true);
   const router = useRouter();
-  const updateUser = useUserStore((state) => state.setUser);
 
   return (
     <div className="w-full h-screen flex justify-center items-center bg-linear-to-br from-[#202442] to-[#121317]">
       <div className="bg-[#16181d] min-h-1/2 min-w-3/10 shadow-xl rounded-lg flex flex-col items-center text-center">
         <h1 className="m-8 font-bold text-white text-xl">Discord Clone</h1>
         <div className="mb-3 flex flex-col">
-          <h1 className="text-white font-bold text-2xl">
-            Boas-vindas de volta!
-          </h1>
-          <h2 className="text-[#6a87a3] ">
-            Estamos muito animados em te ver novamente!
-          </h2>
+          <h1 className="text-white font-bold text-2xl">Cria uma conta!</h1>
+          <h2 className="text-[#6a87a3] ">Junte-se a nós!</h2>
         </div>
         <form
           action={async (formData) => {
-            const res = await login(formData);
-
-            if ("error" in res) {
-              console.log("HOUVE UM ERRO NO LOGIN");
-            } else {
-              updateUser(res);
-              router.push("/");
-            }
+            await register(formData);
           }}
           className="text-start w-[80%] flex flex-col gap-3"
         >
@@ -42,6 +30,21 @@ export default function LoginPage() {
             <input
               type="email"
               name="email"
+              className="bg-[#282b33] px-4 py-2 rounded-md outline-none text-white"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="username"
+              className="text-sm font-bold text-[#7288a3]"
+            >
+              NOME DE USUÁRIO <span className="text-[#e3322c] text-lg">*</span>
+            </label>
+            <input
+              type="text"
+              name="username"
               className="bg-[#282b33] px-4 py-2 rounded-md outline-none text-white"
               required
             />
@@ -80,15 +83,15 @@ export default function LoginPage() {
             type="submit"
             className="bg-linear-to-r from-[#5b64f2] to-[#7b4aeb] w-full h-5/10 p-3 mt-5 mb-1 rounded-md hover:brightness-120 hover:cursor-pointer transition-all text-white"
           >
-            Entrar
+            Continuar
           </button>
           <h2 className="text-[#657d9e] mb-5">
-            Precisando de uma conta?{" "}
+            Já tem uma conta?{" "}
             <button
-              onClick={() => router.push("/register")}
+              onClick={() => router.push("/login")}
               className="hover:cursor-pointer text-[#5664ef] hover:border-b"
             >
-              Registre-se
+              Entrar
             </button>
           </h2>
         </form>

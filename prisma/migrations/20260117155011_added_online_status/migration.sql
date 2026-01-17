@@ -1,0 +1,6 @@
+-- CreateEnum
+CREATE TYPE "OnlineStatus" AS ENUM ('ONLINE', 'ABSENT', 'OFFLINE');
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "lastOnline" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "onlineStatus" "OnlineStatus" NOT NULL DEFAULT 'ONLINE';

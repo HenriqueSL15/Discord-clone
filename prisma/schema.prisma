@@ -12,12 +12,21 @@ enum FriendshipStatus{
   BLOCKED
 }
 
+enum OnlineStatus{
+  ONLINE
+  ABSENT
+  OFFLINE
+}
+
 model User {
   id                String            @id @default(uuid())
   email             String            @unique
   username          String            @unique
   password          String
   createdAt         DateTime          @default(now())
+
+  onlineStatus      OnlineStatus      @default(ONLINE)
+  lastOnline        DateTime          @default(now())
 
   sentRequests      Friendship[]      @relation("sender")
   receivedRequests  Friendship[]      @relation("receiver")

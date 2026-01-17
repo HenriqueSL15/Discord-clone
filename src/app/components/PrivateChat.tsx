@@ -59,8 +59,12 @@ export default function PrivateChat({
           setFriendshipId(currentFriendship.id);
           channel = pusherClient.subscribe(`${currentFriendship.id}`);
 
+          channel.unbind("new-message");
           channel.bind("new-message", (data: MessageWithUsers) => {
-            setMessages((prev) => [...prev, data]);
+            setMessages((prev) => {
+              if (prev.find((m) => m.id == data.id)) return prev;
+              return [...prev, data];
+            });
           });
         }
       }

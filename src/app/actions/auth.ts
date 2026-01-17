@@ -62,7 +62,7 @@ export async function addFriend(senderId: string, formData: FormData) {
 }
 
 export async function login(
-  formData: FormData
+  formData: FormData,
 ): Promise<UserInterface | { error: string }> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -133,7 +133,7 @@ export async function getUserInfo(): Promise<UserInterface | null> {
 }
 
 export async function getOtherUserInfo(
-  id: string
+  id: string,
 ): Promise<UserInterface | null> {
   const userData = await prisma.user.findUnique({
     where: {
@@ -179,6 +179,8 @@ export async function getUserFriendships(): Promise<
             username: true,
             email: true,
             createdAt: true,
+            lastOnline: true,
+            onlineStatus: true,
           },
         },
         receiver: {
@@ -187,6 +189,8 @@ export async function getUserFriendships(): Promise<
             username: true,
             email: true,
             createdAt: true,
+            lastOnline: true,
+            onlineStatus: true,
           },
         },
       },
@@ -201,7 +205,7 @@ export async function getUserFriendships(): Promise<
 
 export async function getMessagesHistory(
   senderId: string | undefined,
-  receiverId: string
+  receiverId: string,
 ): Promise<MessageWithUsers[] | []> {
   if (!senderId) {
     throw new Error("Sender Id é undefined");
@@ -251,7 +255,7 @@ export async function sendMessage(
   senderId: string | undefined,
   receiverId: string,
   message: string,
-  friendshipId: string
+  friendshipId: string,
 ) {
   if (!senderId) {
     throw new Error("Id do sender é undefined");
@@ -287,7 +291,7 @@ export async function sendMessage(
       await pusherServer.trigger(
         `${friendshipId}`,
         "new-message",
-        createdMessage
+        createdMessage,
       );
     }
 
@@ -299,7 +303,7 @@ export async function sendMessage(
 
 export async function changeFriendshipStatus(
   val: FriendshipStatus | "DELETE",
-  friendshipId: string
+  friendshipId: string,
 ): FriendshipWithUsers {
   try {
     if (val == "DELETE") {
@@ -366,5 +370,58 @@ export async function changeFriendshipStatus(
     return updatedFriendship;
   } catch (err) {
     console.log(err);
+  }
+}
+
+export async function updateOnlineStatus(userId, status) {
+  try {
+    if (status === "ONLINE") {
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          onlineStatus: status,
+          lastOnline: new Date(),
+        },
+      });
+    } else {
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          onlineStatus: status,
+        },
+      });
+    }
+
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+      },
+    });
+
+    const notifications = friendships.map((f) => {
+      const targetId = f.receiverId == userId ? f.senderId : f.receiverId;
+      return pusherServer.trigger(
+        `private-user-${targetId}`,
+        "friend-status-changed",
+        {
+          userId,
+          status,
+        },
+      );
+    });
+
+    await pusherServer.trigger(`private-user-${userId}`, "own-status-changed", {
+      status,
+    });
+
+    await Promise.all(notifications);
+
+    return { success: true };
+  } catch (err) {
+    console.log("ERRO AO ATUALIZAR STATUS DE USUÁRIO");
   }
 }

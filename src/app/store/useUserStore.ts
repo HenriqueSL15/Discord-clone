@@ -9,7 +9,12 @@ interface UserState {
   setUser: (user: UserInterface) => void;
 
   friendships: FriendshipWithUsers[] | null;
-  setFriendships: (friendships: FriendshipWithUsers[] | null) => void;
+  setFriendships: (
+    updater:
+      | FriendshipWithUsers[]
+      | null
+      | ((prev: FriendshipWithUsers[] | null) => FriendshipWithUsers[] | null)
+  ) => void;
 
   page: string | null;
   setPage: (page: string) => void;
@@ -22,8 +27,13 @@ export const useUserStore = create<UserState>()(
       setUser: (user: UserInterface) => set({ user }),
 
       friendships: null as FriendshipWithUsers[] | null,
-      setFriendships: (friendships: FriendshipWithUsers[] | null) =>
-        set({ friendships }),
+      setFriendships: (updater) =>
+        set((state) => ({
+          friendships:
+            typeof updater === "function"
+              ? updater(state.friendships)
+              : updater,
+        })),
 
       page: null as string | null,
       setPage: (page: string) => set({ page }),

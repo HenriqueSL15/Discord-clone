@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PresenceManager } from "./components/PresenceManager";
 
 export const metadata: Metadata = {
   title: "Discord Clone",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body className={`antialiased`}>{children}</body>
+      <body className={`antialiased`}>
+        <PresenceManager />
+        {children}
+      </body>
     </html>
   );
 }

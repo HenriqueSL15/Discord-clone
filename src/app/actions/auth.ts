@@ -88,6 +88,16 @@ export async function login(
 
     const cookieStore = await cookies();
     cookieStore.set("session", session, { expires, httpOnly: true });
+
+    await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        lastOnline: new Date(),
+        onlineStatus: "ONLINE",
+      },
+    });
   } catch (err) {
     return { error: "E-mail ou Senha errados" };
   }
@@ -101,6 +111,19 @@ export async function login(
 
 export async function logoff() {
   const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  const sessionData = await decrypt(token);
+  if (!sessionData || !sessionData.userId) {
+    return null;
+  }
+
+  await updateOnlineStatus(sessionData.userId, "OFFLINE");
+
   cookieStore.delete("session");
 
   redirect("/login");
@@ -373,9 +396,12 @@ export async function changeFriendshipStatus(
   }
 }
 
-export async function updateOnlineStatus(userId, status) {
+export async function updateOnlineStatus(
+  userId: string,
+  status: "ONLINE" | "ABSENT" | "OFFLINE",
+) {
   try {
-    if (status === "ONLINE") {
+    if (status === "ONLINE" || status === "OFFLINE") {
       await prisma.user.update({
         where: {
           id: userId,

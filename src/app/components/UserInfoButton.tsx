@@ -13,6 +13,7 @@ export default function UserInfoButton() {
   });
 
   formattedStatus?.join("");
+
   return (
     <button className="flex gap-3 items-center hover:bg-[#23252d] w-1/2 h-full cursor-pointer transition-all rounded-lg">
       <div className="w-12 h-12 bg-black rounded-full relative">

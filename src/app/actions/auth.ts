@@ -228,11 +228,16 @@ export async function getUserFriendships(): Promise<
 
 export async function getMessagesHistory(
   senderId: string | undefined,
-  receiverId: string,
+  receiverId: string | null,
 ): Promise<MessageWithUsers[] | []> {
   if (!senderId) {
     throw new Error("Sender Id é undefined");
   }
+
+  if (!receiverId) {
+    throw new Error("Receiver Id é null");
+  }
+
   try {
     const messages = await prisma.message.findMany({
       where: {
@@ -265,6 +270,7 @@ export async function getMessagesHistory(
           },
         },
       },
+      orderBy: { createdAt: "asc" },
     });
 
     return messages;
@@ -449,5 +455,28 @@ export async function updateOnlineStatus(
     return { success: true };
   } catch (err) {
     console.log("ERRO AO ATUALIZAR STATUS DE USUÁRIO");
+  }
+}
+
+export async function updateMessage(
+  userId: string,
+  messageId: string,
+  newMessage: string,
+) {
+  if (!userId) return { sucess: false };
+  try {
+    const message = await prisma.message.update({
+      where: {
+        id: messageId,
+      },
+      data: {
+        message: newMessage,
+      },
+    });
+
+    return { sucess: true };
+  } catch (err) {
+    console.log(err);
+    return { error: err };
   }
 }

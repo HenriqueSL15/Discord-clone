@@ -5,11 +5,13 @@ import {
   getOtherUserInfo,
   getUserFriendships,
   sendMessage,
+  updateMessage,
 } from "../actions/auth";
 import { MessageWithUsers } from "../types/Message";
 import { useUserStore } from "../store/useUserStore";
 import { pusherClient } from "../lib/pusher-client";
 import { FriendshipWithUsers } from "../types/Friendship";
+import { Pencil } from "lucide-react";
 
 export default function PrivateChat({
   otherUserId,
@@ -21,6 +23,9 @@ export default function PrivateChat({
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<MessageWithUsers[]>([]);
   const [friendshipId, setFriendshipId] = useState("");
+
+  const [editing, setEditing] = useState("");
+  const [newMessage, setNewMessage] = useState("");
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +57,7 @@ export default function PrivateChat({
         const currentFriendship = friendships.find(
           (friendship: FriendshipWithUsers) =>
             friendship.senderId == otherUserInfo?.id ||
-            friendship.receiverId == otherUserInfo?.id
+            friendship.receiverId == otherUserInfo?.id,
         );
 
         if (currentFriendship) {
@@ -97,10 +102,10 @@ export default function PrivateChat({
           let previousMessage = null;
           if (messages[i - 1]) {
             const previousDay = Number(
-              new Date(messages[i - 1].createdAt).getDate()
+              new Date(messages[i - 1].createdAt).getDate(),
             );
             const previousMonth = Number(
-              new Date(messages[i - 1].createdAt).getMonth()
+              new Date(messages[i - 1].createdAt).getMonth(),
             );
 
             const currentDay = new Date(message.createdAt).getDate();
@@ -141,6 +146,12 @@ export default function PrivateChat({
             }
           }
 
+          const isUpdated =
+            new Date(message.createdAt).getTime() ==
+            new Date(message.updatedAt).getTime()
+              ? false
+              : true;
+
           return (
             <div
               key={i}
@@ -156,7 +167,7 @@ export default function PrivateChat({
               <div
                 className={`text-xl ${
                   !thisMessageHasAGroup ? "px-2" : "px-2"
-                } break-words text-white hover:bg-[#5c7ca0]/15 text-start rounded-sm`}
+                } break-words text-white group hover:bg-[#5c7ca0]/15 text-start rounded-sm`}
               >
                 {!thisMessageHasAGroup && (
                   <h1 className="text-2xl font-semibold text-[#ffffff]">
@@ -166,8 +177,66 @@ export default function PrivateChat({
                     </span>
                   </h1>
                 )}
+                {editing != message.id ? (
+                  <h1 className="text-[#c2c2c5] text-lg relative">
+                    {message.message}{" "}
+                    {isUpdated && (
+                      <span className="text-base font-normal text-[#75869f]">
+                        (editado)
+                      </span>
+                    )}
+                    {message.senderId == user?.id && (
+                      <Pencil
+                        size={20}
+                        className="opacity-0 group-hover:opacity-100 absolute right-0 top-1 cursor-pointer hover:scale-110 transition-transform"
+                        onClick={() => {
+                          setEditing(message.id);
+                          setNewMessage(message.message);
+                        }}
+                      />
+                    )}
+                  </h1>
+                ) : (
+                  editing == message.id && (
+                    <form
+                      className="flex p-4 gap-10"
+                      action={async (formData: FormData) => {
+                        if (newMessage.length > 0) {
+                          const res = await updateMessage(
+                            user?.id as string,
+                            message.id,
+                            newMessage,
+                          );
 
-                <h1 className="text-[#c2c2c5] text-lg">{message.message}</h1>
+                          if ("error" in res) {
+                            console.log("deu erro");
+                          } else {
+                            setEditing("");
+                            const res = await getMessagesHistory(
+                              user?.id,
+                              otherUserId,
+                            );
+
+                            if (res) setMessages(res);
+                          }
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setNewMessage(message.message);
+                          setEditing("");
+                        }
+                      }}
+                    >
+                      <input
+                        className="text-[#c2c2c5] mb-2 text-lg relative w-full p-5 border-2 border-gray-700/50 rounded-sm bg-gray-700/20 outline-none break-words"
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        value={newMessage}
+                        autoFocus
+                      />
+                    </form>
+                  )
+                )}
               </div>
             </div>
           );
@@ -181,7 +250,7 @@ export default function PrivateChat({
             user?.id,
             otherUserId as string,
             inputValue,
-            friendshipId
+            friendshipId,
           );
           const inputVal = inputValue;
           setInputValue("");

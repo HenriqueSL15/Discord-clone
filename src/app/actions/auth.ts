@@ -463,7 +463,7 @@ export async function updateMessage(
   messageId: string,
   newMessage: string,
 ) {
-  if (!userId) return { sucess: false };
+  if (!userId) return { success: false };
   try {
     const message = await prisma.message.update({
       where: {
@@ -474,9 +474,23 @@ export async function updateMessage(
       },
     });
 
-    return { sucess: true };
+    return { success: true };
   } catch (err) {
     console.log(err);
     return { error: err };
+  }
+}
+
+export async function deleteMessage(messageId: string) {
+  try {
+    const message = await prisma.message.delete({
+      where: {
+        id: messageId,
+      },
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.log(err);
   }
 }

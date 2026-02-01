@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import {
+  deleteMessage,
   getMessagesHistory,
   getOtherUserInfo,
   getUserFriendships,
@@ -11,7 +12,7 @@ import { MessageWithUsers } from "../types/Message";
 import { useUserStore } from "../store/useUserStore";
 import { pusherClient } from "../lib/pusher-client";
 import { FriendshipWithUsers } from "../types/Friendship";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function PrivateChat({
   otherUserId,
@@ -85,6 +86,17 @@ export default function PrivateChat({
       }
     };
   }, [otherUserId, user?.id]);
+
+  const handleDeleteMessage = async (messageId: string) => {
+    const res = await deleteMessage(messageId);
+
+    if ("error" in res) {
+      console.log("deu erro");
+    } else {
+      const messages = await getMessagesHistory(user?.id, otherUserId);
+      if (messages) setMessages(messages);
+    }
+  };
 
   return (
     <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end h-screen">
@@ -186,14 +198,21 @@ export default function PrivateChat({
                       </span>
                     )}
                     {message.senderId == user?.id && (
-                      <Pencil
-                        size={20}
-                        className="opacity-0 group-hover:opacity-100 absolute right-0 top-1 cursor-pointer hover:scale-110 transition-transform"
-                        onClick={() => {
-                          setEditing(message.id);
-                          setNewMessage(message.message);
-                        }}
-                      />
+                      <div className="flex gap-3 absolute top-1 right-1 items-center">
+                        <Pencil
+                          size={20}
+                          className="opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-110 transition-transform"
+                          onClick={() => {
+                            setEditing(message.id);
+                            setNewMessage(message.message);
+                          }}
+                        />
+                        <Trash2
+                          size={20}
+                          className="opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-110 transition-transform"
+                          onClick={() => handleDeleteMessage(message.id)}
+                        />
+                      </div>
                     )}
                   </h1>
                 ) : (

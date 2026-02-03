@@ -7,8 +7,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { FriendshipWithUsers } from "../types/Friendship";
 import { MessageWithUsers } from "../types/Message";
+import UserInterface from "../types/User";
 import { pusherServer } from "../lib/pusher";
-import { FriendshipStatus } from "@prisma/client";
+import { FriendshipStatus, Message } from "@prisma/client";
 
 export async function register(formData: FormData) {
   const email = formData.get("email") as string;
@@ -38,8 +39,24 @@ export async function register(formData: FormData) {
   redirect("/");
 }
 
-export async function addFriend(senderId: string, formData: FormData) {
+export async function addFriend(formData: FormData) {
   const receiverUsername = formData.get("searchInput") as string;
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  const sessionData = await decrypt(token);
+  if (!sessionData || !sessionData.userId) {
+    return null;
+  }
+
+  const senderId = sessionData.userId;
+  if (!senderId) {
+    throw new Error("Sender Id é undefined");
+  }
 
   try {
     const receiverUser = await prisma.user.findUnique({
@@ -110,20 +127,9 @@ export async function login(
 }
 
 export async function logoff() {
+  await updateOnlineStatus("OFFLINE");
+
   const cookieStore = await cookies();
-  const token = cookieStore.get("session")?.value;
-
-  if (!token) {
-    return null;
-  }
-
-  const sessionData = await decrypt(token);
-  if (!sessionData || !sessionData.userId) {
-    return null;
-  }
-
-  await updateOnlineStatus(sessionData.userId, "OFFLINE");
-
   cookieStore.delete("session");
 
   redirect("/login");
@@ -227,9 +233,22 @@ export async function getUserFriendships(): Promise<
 }
 
 export async function getMessagesHistory(
-  senderId: string | undefined,
   receiverId: string | null,
 ): Promise<MessageWithUsers[] | []> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    return [];
+  }
+
+  const sessionData = await decrypt(token);
+  if (!sessionData || !sessionData.userId) {
+    return [];
+  }
+
+  const senderId = sessionData.userId;
+
   if (!senderId) {
     throw new Error("Sender Id é undefined");
   }
@@ -333,8 +352,36 @@ export async function sendMessage(
 export async function changeFriendshipStatus(
   val: FriendshipStatus | "DELETE",
   friendshipId: string,
-): FriendshipWithUsers {
+): Promise<FriendshipWithUsers | undefined> {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("session")?.value;
+
+    if (!token) {
+      throw new Error("Token não encontrado");
+    }
+
+    const sessionData = await decrypt(token);
+    if (!sessionData) {
+      throw new Error("Sessão não encontrada");
+    }
+
+    const userId = sessionData.userId;
+
+    const friendship = await prisma.friendship.findUnique({
+      where: {
+        id: friendshipId,
+      },
+    });
+
+    if (!friendship) {
+      throw new Error("Amizade não encontrada");
+    }
+
+    if (friendship.senderId != userId && friendship.receiverId != userId) {
+      throw new Error("Você não faz parte dessa amizade");
+    }
+
     if (val == "DELETE") {
       const deletedFriendship = await prisma.friendship.delete({
         where: {
@@ -347,6 +394,8 @@ export async function changeFriendshipStatus(
               email: true,
               username: true,
               createdAt: true,
+              onlineStatus: true,
+              lastOnline: true,
             },
           },
           receiver: {
@@ -355,6 +404,8 @@ export async function changeFriendshipStatus(
               email: true,
               username: true,
               createdAt: true,
+              onlineStatus: true,
+              lastOnline: true,
             },
           },
         },
@@ -380,6 +431,8 @@ export async function changeFriendshipStatus(
             email: true,
             username: true,
             createdAt: true,
+            onlineStatus: true,
+            lastOnline: true,
           },
         },
         receiver: {
@@ -388,6 +441,8 @@ export async function changeFriendshipStatus(
             email: true,
             username: true,
             createdAt: true,
+            onlineStatus: true,
+            lastOnline: true,
           },
         },
       },
@@ -399,16 +454,37 @@ export async function changeFriendshipStatus(
     return updatedFriendship;
   } catch (err) {
     console.log(err);
+    return undefined;
   }
 }
 
 export async function updateOnlineStatus(
+  status: "ONLINE" | "ABSENT" | "OFFLINE",
+): Promise<UserInterface | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  const sessionData = await decrypt(token);
+  if (!sessionData || !sessionData.userId) {
+    return null;
+  }
+  const userId = sessionData.userId;
+
+  return _updateUserStatus(userId, status);
+}
+
+export async function _updateUserStatus(
   userId: string,
   status: "ONLINE" | "ABSENT" | "OFFLINE",
-) {
+): Promise<UserInterface | null> {
   try {
+    let user;
     if (status === "ONLINE" || status === "OFFLINE") {
-      await prisma.user.update({
+      user = await prisma.user.update({
         where: {
           id: userId,
         },
@@ -418,7 +494,7 @@ export async function updateOnlineStatus(
         },
       });
     } else {
-      await prisma.user.update({
+      user = await prisma.user.update({
         where: {
           id: userId,
         },
@@ -452,45 +528,99 @@ export async function updateOnlineStatus(
 
     await Promise.all(notifications);
 
-    return { success: true };
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   } catch (err) {
-    console.log("ERRO AO ATUALIZAR STATUS DE USUÁRIO");
+    console.log("ERRO AO ATUALIZAR STATUS DE USUÁRIO", err);
+    return null;
   }
 }
 
 export async function updateMessage(
-  userId: string,
   messageId: string,
   newMessage: string,
-) {
-  if (!userId) return { success: false };
+): Promise<MessageWithUsers | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    console.error("Token não encontrado");
+    return null;
+  }
+
+  const sessionData = await decrypt(token);
+  if (!sessionData?.userId) {
+    console.error("Sessão ou ID de usuário não encontrado");
+    return null;
+  }
+  const userId = sessionData.userId;
+
   try {
     const message = await prisma.message.update({
       where: {
         id: messageId,
+        senderId: userId,
       },
       data: {
         message: newMessage,
       },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            createdAt: true,
+          },
+        },
+      },
     });
 
-    return { success: true };
+    return message;
   } catch (err) {
     console.log(err);
-    return { error: err };
+    return null;
   }
 }
 
-export async function deleteMessage(messageId: string) {
+export async function deleteMessage(
+  messageId: string,
+): Promise<Message | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    console.error("Token não encontrado");
+    return null;
+  }
+
+  const sessionData = await decrypt(token);
+
+  if (!sessionData?.userId) {
+    console.error("Sessão ou ID de usuário não encontrado");
+    return null;
+  }
+  const userId = sessionData.userId;
+
   try {
     const message = await prisma.message.delete({
       where: {
         id: messageId,
+        senderId: userId,
       },
     });
 
-    return { success: true };
+    return message;
   } catch (err) {
     console.log(err);
+    return null;
   }
 }

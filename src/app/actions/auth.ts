@@ -9,8 +9,19 @@ import { FriendshipWithUsers } from "../types/Friendship";
 import { MessageWithUsers } from "../types/Message";
 import UserInterface from "../types/User";
 import { pusherServer } from "../lib/pusher";
-import { FriendshipStatus, Message } from "@prisma/client";
+import { Friendship, FriendshipStatus, Message } from "@prisma/client";
 
+/**
+ * Registra um novo usuário, faz o hash da senha, cria um cookie de sessão e redireciona para a página principal.
+ * @param {FormData} formData - Os dados do formulário de registro, contendo email, nome de usuário e senha.
+ * @returns {Promise<void | { error: string }>} Redireciona em caso de sucesso ou retorna um objeto de erro se o e-mail/usuário já existir.
+ * @example
+ * const formData = new FormData();
+ * formData.append('email', 'test@example.com');
+ * formData.append('username', 'testuser');
+ * formData.append('password', 'password123');
+ * await register(formData);
+ */
 export async function register(formData: FormData) {
   const email = formData.get("email") as string;
   const username = formData.get("username") as string;
@@ -39,6 +50,15 @@ export async function register(formData: FormData) {
   redirect("/");
 }
 
+/**
+ * Cria uma solicitação de amizade entre o usuário logado e outro usuário.
+ * @param {FormData} formData - Dados do formulário contendo o nome de usuário do usuário a ser adicionado (`searchInput`).
+ * @returns {Promise<Friendship | null>} Retorna o objeto de amizade criado ou nulo se a sessão for inválida ou ocorrer um erro.
+ * @example
+ * const formData = new FormData();
+ * formData.append('searchInput', 'friendUsername');
+ * const friendship = await addFriend(formData);
+ */
 export async function addFriend(formData: FormData) {
   const receiverUsername = formData.get("searchInput") as string;
   const cookieStore = await cookies();
@@ -78,6 +98,16 @@ export async function addFriend(formData: FormData) {
   }
 }
 
+/**
+ * Realiza o login de um usuário, verifica as credenciais, cria um cookie de sessão, atualiza seu status online e retorna as informações do usuário.
+ * @param {FormData} formData - Dados do formulário de login, contendo email and password.
+ * @returns {Promise<UserInterface | { error: string }>} Retorna o objeto do usuário em caso de sucesso ou um objeto de erro em caso de falha.
+ * @example
+ * const formData = new FormData();
+ * formData.append('email', 'user@example.com');
+ * formData.append('password', 'password123');
+ * const user = await login(formData);
+ */
 export async function login(
   formData: FormData,
 ): Promise<UserInterface | { error: string }> {
@@ -126,6 +156,12 @@ export async function login(
   return res;
 }
 
+/**
+ * Realiza o logoff do usuário atual, atualiza seu status online para "OFFLINE", exclui o cookie de sessão e redireciona para a página de login.
+ * @returns {Promise<void>} Redireciona o usuário para a página de login.
+ * @example
+ * await logoff();
+ */
 export async function logoff() {
   await updateOnlineStatus("OFFLINE");
 
@@ -135,6 +171,12 @@ export async function logoff() {
   redirect("/login");
 }
 
+/**
+ * Recupera as informações do usuário atualmente logado a partir do cookie de sessão.
+ * @returns {Promise<UserInterface | null>} Retorna o objeto do usuário (sem a senha) ou nulo se a sessão não for válida.
+ * @example
+ * const currentUser = await getUserInfo();
+ */
 export async function getUserInfo(): Promise<UserInterface | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
@@ -161,6 +203,13 @@ export async function getUserInfo(): Promise<UserInterface | null> {
   return userWithoutPassword;
 }
 
+/**
+ * Recupera informações públicas de um usuário específico pelo seu ID.
+ * @param {string} id - O ID exclusivo do usuário a ser recuperado.
+ * @returns {Promise<UserInterface | null>} Retorna o objeto do usuário (sem a senha) ou nulo se o usuário não for encontrado.
+ * @example
+ * const user = await getOtherUserInfo('some-user-id');
+ */
 export async function getOtherUserInfo(
   id: string,
 ): Promise<UserInterface | null> {
@@ -177,6 +226,12 @@ export async function getOtherUserInfo(
   return userWithoutPassword;
 }
 
+/**
+ * Busca todas as amizades (pendentes, aceitas, bloqueadas) para o usuário atualmente logado.
+ * @returns {Promise<FriendshipWithUsers[] | null>} Retorna um array de objetos de amizade com detalhes do remetente e do destinatário, ou nulo em caso de erro/sessão inválida.
+ * @example
+ * const friendships = await getUserFriendships();
+ */
 export async function getUserFriendships(): Promise<
   FriendshipWithUsers[] | null
 > {
@@ -232,6 +287,14 @@ export async function getUserFriendships(): Promise<
   }
 }
 
+/**
+ * Recupera o histórico de mensagens entre o usuário logado e outro usuário especificado.
+ * @param {string | null} receiverId - O ID do outro usuário na conversa.
+ * @returns {Promise<MessageWithUsers[] | []>} Retorna uma array de objetos de mensagem, ordenados por data de criação, ou uma array vazia em caso de erro/sessão inválida.
+ * @throws {Error} Se `receiverId` for nulo ou `senderId` não puder ser determinado a partir da sessão.
+ * @example
+ * const messages = await getMessagesHistory('receiver-user-id');
+ */
 export async function getMessagesHistory(
   receiverId: string | null,
 ): Promise<MessageWithUsers[] | []> {
@@ -299,6 +362,17 @@ export async function getMessagesHistory(
   return [];
 }
 
+/**
+ * Envia uma mensagem de um usuário para outro e aciona um evento do Pusher para notificar o destinatário em tempo real.
+ * @param {string | undefined} senderId - O ID do remetente da mensagem.
+ * @param {string} receiverId - O ID do destinatário da mensagem.
+ * @param {string} message - O conteúdo da mensagem.
+ * @param {string} friendshipId - O ID da amizade, usado como canal para o evento do Pusher.
+ * @returns {Promise<MessageWithUsers | undefined>} Retorna o objeto da mensagem criada ou indefinido em caso de erro.
+ * @throws {Error} Se `senderId` for indefinido.
+ * @example
+ * await sendMessage('sender-id', 'receiver-id', 'Hello!', 'friendship-id');
+ */
 export async function sendMessage(
   senderId: string | undefined,
   receiverId: string,
@@ -349,6 +423,16 @@ export async function sendMessage(
   }
 }
 
+/**
+ * Atualiza o status de uma amizade (ex: ACEITA, BLOQUEADA) ou a exclui. O usuário deve fazer parte da amizade.
+ * @param {FriendshipStatus | "DELETE"} val - O novo status a ser definido (`"ACCEPTED"`, `"BLOCKED"`, `"PENDING"`) ou `"DELETE"` para remover a amizade.
+ * @param {string} friendshipId - O ID da amizade a ser modificada.
+ * @returns {Promise<FriendshipWithUsers | undefined>} Retorna o objeto de amizade atualizado ou excluído, ou indefinido em caso de erro.
+ * @throws {Error} Se a sessão for inválida, a amizade não existir ou o usuário não fizer parte da amizade.
+ * @example
+ * await changeFriendshipStatus("ACCEPTED", "friendship-id-123");
+ * await changeFriendshipStatus("DELETE", "friendship-id-456");
+ */
 export async function changeFriendshipStatus(
   val: FriendshipStatus | "DELETE",
   friendshipId: string,
@@ -458,6 +542,13 @@ export async function changeFriendshipStatus(
   }
 }
 
+/**
+ * Atualiza o status online do usuário atualmente logado. É um invólucro em torno de `_updateUserStatus`.
+ * @param {"ONLINE" | "ABSENT" | "OFFLINE"} status - The new online status.
+ * @returns {Promise<UserInterface | null>} Retorna o objeto do usuário atualizado ou nulo em caso de erro/sessão inválida.
+ * @example
+ * await updateOnlineStatus("ABSENT");
+ */
 export async function updateOnlineStatus(
   status: "ONLINE" | "ABSENT" | "OFFLINE",
 ): Promise<UserInterface | null> {
@@ -477,6 +568,15 @@ export async function updateOnlineStatus(
   return _updateUserStatus(userId, status);
 }
 
+/**
+ * (Função privada) Atualiza o status online de um usuário no banco de dados e notifica seus amigos via Pusher sobre a mudança de status.
+ * @param {string} userId - O ID do usuário a ser atualizado.
+ * @param {"ONLINE" | "ABSENT" | "OFFLINE"} status - O novo status online.
+ * @returns {Promise<UserInterface | null>} Retorna o objeto do usuário atualizado (sem senha) ou nulo em caso de erro.
+ * @example
+ * // Uso interno apenas
+ * await _updateUserStatus('user-id-123', 'ONLINE');
+ */
 export async function _updateUserStatus(
   userId: string,
   status: "ONLINE" | "ABSENT" | "OFFLINE",
@@ -536,6 +636,14 @@ export async function _updateUserStatus(
   }
 }
 
+/**
+ * Atualiza o conteúdo de uma mensagem enviada pelo usuário atualmente logado.
+ * @param {string} messageId - O ID da mensagem a ser atualizada.
+ * @param {string} newMessage - O novo conteúdo da mensagem.
+ * @returns {Promise<MessageWithUsers | null>} Retorna o objeto da mensagem atualizada ou nulo se o usuário não for o remetente ou ocorrer um erro.
+ * @example
+ * await updateMessage('message-id-123', 'Este é o novo conteúdo da mensagem.');
+ */
 export async function updateMessage(
   messageId: string,
   newMessage: string,
@@ -591,6 +699,13 @@ export async function updateMessage(
   }
 }
 
+/**
+ * Exclui uma mensagem enviada pelo usuário atualmente logado.
+ * @param {string} messageId - O ID da mensagem a ser excluída.
+ * @returns {Promise<Message | null>} Retorna o objeto da mensagem excluída ou nulo se o usuário não for o remetente ou ocorrer um erro.
+ * @example
+ * await deleteMessage('message-id-123');
+ */
 export async function deleteMessage(
   messageId: string,
 ): Promise<Message | null> {

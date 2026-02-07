@@ -13,6 +13,7 @@ import { useUserStore } from "../store/useUserStore";
 import { pusherClient } from "../lib/pusher-client";
 import { FriendshipWithUsers } from "../types/Friendship";
 import { Pencil, Trash2 } from "lucide-react";
+import UserInterface from "../types/User";
 
 export default function PrivateChat({
   otherUserId,
@@ -46,7 +47,7 @@ export default function PrivateChat({
     let channel: any;
 
     const fetchHistory = async () => {
-      const res = await getMessagesHistory(user?.id, otherUserId);
+      const res = await getMessagesHistory(otherUserId);
       const otherUserInfo = await getOtherUserInfo(otherUserId);
       const friendships = await getUserFriendships();
 

@@ -3,13 +3,17 @@
 import UserInfoButton from "./UserInfoButton";
 import IconButton from "./IconButton";
 import { Mic, MicOff, Headphones, Volume2, Settings } from "lucide-react";
+// import { useUserStore } from "../store/useUserStore";
+// import SettingsModal from "./Sidebar/SettingsModal";
 
 export default function UserInfo() {
   const icons = [[Mic, MicOff], [Headphones, Volume2], [Settings]];
+  // const modal = useUserStore((state) => state.modal);
   const actions = ["mic", "headphone", "userSettings"];
 
   return (
     <div className="w-full h-20 bg-[#0f0f13] p-1 rounded-lg flex">
+      {/* {modal == "settings" && <SettingsModal />} */}
       <UserInfoButton />
       <div className="text-white flex h-full items-center">
         {Array.from({ length: 3 }).map((value, index) => (

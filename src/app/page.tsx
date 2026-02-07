@@ -17,7 +17,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen relative">
       <div className="bg-[#16181d]/95 w-1/5 flex flex-col  p-3">
         <FriendsButton />
         <FriendsList friendships={friendships} />

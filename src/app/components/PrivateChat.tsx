@@ -12,7 +12,7 @@ import { MessageWithUsers } from "../types/Message";
 import { useUserStore } from "../store/useUserStore";
 import { pusherClient } from "../lib/pusher-client";
 import { FriendshipWithUsers } from "../types/Friendship";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, LoaderCircle } from "lucide-react";
 import UserInterface from "../types/User";
 
 export default function PrivateChat({
@@ -25,6 +25,7 @@ export default function PrivateChat({
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<MessageWithUsers[]>([]);
   const [friendshipId, setFriendshipId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [editing, setEditing] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -47,35 +48,42 @@ export default function PrivateChat({
     let channel: any;
 
     const fetchHistory = async () => {
-      const res = await getMessagesHistory(otherUserId);
-      const otherUserInfo = await getOtherUserInfo(otherUserId);
-      const friendships = await getUserFriendships();
+      try {
+        setIsLoading(true);
+        const res = await getMessagesHistory(otherUserId);
+        const otherUserInfo = await getOtherUserInfo(otherUserId);
+        const friendships = await getUserFriendships();
 
-      if (otherUserInfo) {
-        setOtherUser(otherUserInfo);
-      }
-
-      if (friendships) {
-        const currentFriendship = friendships.find(
-          (friendship: FriendshipWithUsers) =>
-            friendship.senderId == otherUserInfo?.id ||
-            friendship.receiverId == otherUserInfo?.id,
-        );
-
-        if (currentFriendship) {
-          setFriendshipId(currentFriendship.id);
-          channel = pusherClient.subscribe(`${currentFriendship.id}`);
-
-          channel.unbind("new-message");
-          channel.bind("new-message", (data: MessageWithUsers) => {
-            setMessages((prev) => {
-              if (prev.find((m) => m.id == data.id)) return prev;
-              return [...prev, data];
-            });
-          });
+        if (otherUserInfo) {
+          setOtherUser(otherUserInfo);
         }
+
+        if (friendships) {
+          const currentFriendship = friendships.find(
+            (friendship: FriendshipWithUsers) =>
+              friendship.senderId == otherUserInfo?.id ||
+              friendship.receiverId == otherUserInfo?.id,
+          );
+
+          if (currentFriendship) {
+            setFriendshipId(currentFriendship.id);
+            channel = pusherClient.subscribe(`${currentFriendship.id}`);
+
+            channel.unbind("new-message");
+            channel.bind("new-message", (data: MessageWithUsers) => {
+              setMessages((prev) => {
+                if (prev.find((m) => m.id == data.id)) return prev;
+                return [...prev, data];
+              });
+            });
+          }
+        }
+        if (res) setMessages(res);
+      } catch (err) {
+        console.log("Deu erro", err);
+      } finally {
+        setIsLoading(false);
       }
-      if (res) setMessages(res);
     };
 
     fetchHistory();
@@ -94,7 +102,7 @@ export default function PrivateChat({
     if ("error" in res) {
       console.log("deu erro");
     } else {
-      const messages = await getMessagesHistory(user?.id, otherUserId);
+      const messages = await getMessagesHistory(otherUserId);
       if (messages) setMessages(messages);
     }
   };
@@ -102,6 +110,14 @@ export default function PrivateChat({
   return (
     <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end h-screen">
       <div className="flex flex-col w-full flex-1 p-3 overflow-y-auto">
+        {isLoading && (
+          <div className="flex items-center justify-center flex-1 gap-2">
+            <LoaderCircle className="animate-spin" color="white" size={40} />
+            <h1 className="text-white text-lg font-semibold">
+              Carregando histórico de mensagens...
+            </h1>
+          </div>
+        )}
         {messages.map((message: MessageWithUsers, i: number) => {
           const fullDate = new Date(message.createdAt).toLocaleString();
 
@@ -224,7 +240,6 @@ export default function PrivateChat({
                         if (newMessage.length > 0) {
                           const res = await updateMessage(
                             user?.id as string,
-                            message.id,
                             newMessage,
                           );
 
@@ -233,7 +248,6 @@ export default function PrivateChat({
                           } else {
                             setEditing("");
                             const res = await getMessagesHistory(
-                              user?.id,
                               otherUserId,
                             );
 

@@ -374,11 +374,24 @@ export async function getMessagesHistory(
  * await sendMessage('sender-id', 'receiver-id', 'Hello!', 'friendship-id');
  */
 export async function sendMessage(
-  senderId: string | undefined,
   receiverId: string,
   message: string,
   friendshipId: string,
 ) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+
+  if (!token) {
+    throw new Error("Token não encontrado");
+  }
+
+  const sessionData = await decrypt(token);
+  if (!sessionData) {
+    throw new Error("Sessão não encontrada");
+  }
+
+  const senderId = sessionData.userId;
+
   if (!senderId) {
     throw new Error("Id do sender é undefined");
   }

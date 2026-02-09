@@ -315,7 +315,6 @@ export default function PrivateChat({
           setMessages((prev) => [...prev, temporaryMessage]);
 
           const res = await sendMessage(
-            user?.id,
             otherUserId as string,
             inputVal,
             friendshipId,

@@ -14,6 +14,8 @@ import { pusherClient } from "../lib/pusher-client";
 import { FriendshipWithUsers } from "../types/Friendship";
 import { Pencil, Trash2, LoaderCircle } from "lucide-react";
 import UserInterface from "../types/User";
+import { resolve } from "url";
+import { Message } from "@prisma/client";
 
 export default function PrivateChat({
   otherUserId,
@@ -97,13 +99,13 @@ export default function PrivateChat({
   }, [otherUserId, user?.id]);
 
   const handleDeleteMessage = async (messageId: string) => {
+    const allMessages = [...messages];
+    setMessages((prev) => prev.filter((m) => m.id != messageId));
     const res = await deleteMessage(messageId);
 
     if ("error" in res) {
       console.log("deu erro");
-    } else {
-      const messages = await getMessagesHistory(otherUserId);
-      if (messages) setMessages(messages);
+      setMessages(allMessages);
     }
   };
 
@@ -238,20 +240,26 @@ export default function PrivateChat({
                       className="flex p-4 gap-10"
                       action={async (formData: FormData) => {
                         if (newMessage.length > 0) {
+                          const allMessages = [...messages];
+                          setMessages((prev) =>
+                            prev.map((m) => {
+                              if (m.id == message.id)
+                                return { ...m, message: newMessage };
+                              return m;
+                            }),
+                          );
+
                           const res = await updateMessage(
-                            user?.id as string,
+                            message.id,
                             newMessage,
                           );
 
                           if ("error" in res) {
                             console.log("deu erro");
+                            setMessages(allMessages);
+                            setEditing("");
                           } else {
                             setEditing("");
-                            const res = await getMessagesHistory(
-                              otherUserId,
-                            );
-
-                            if (res) setMessages(res);
                           }
                         }
                       }}
@@ -280,19 +288,45 @@ export default function PrivateChat({
       <form
         className="flex p-4 gap-10"
         action={async (formData: FormData) => {
-          const res = await sendMessage(
-            user?.id,
-            otherUserId as string,
-            inputValue,
-            friendshipId,
-          );
           const inputVal = inputValue;
           setInputValue("");
 
+          const temporaryMessage: MessageWithUsers = {
+            id: "temporary",
+            sender: {
+              id: user!.id,
+              username: user!.username,
+              email: user!.email,
+              createdAt: user!.createdAt,
+            },
+            senderId: user!.id,
+            receiver: {
+              id: otherUser!.id,
+              username: otherUser!.username,
+              email: otherUser!.email,
+              createdAt: otherUser!.createdAt,
+            },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            message: inputVal,
+            receiverId: otherUserId as string,
+          };
+
+          setMessages((prev) => [...prev, temporaryMessage]);
+
+          const res = await sendMessage(
+            user?.id,
+            otherUserId as string,
+            inputVal,
+            friendshipId,
+          );
+
           if ("error" in res) {
             console.log("deu erro");
+            setMessages((prev) => prev.filter((m) => m.id != "temporary"));
             setInputValue(inputVal);
           } else {
+            setMessages((prev) => prev.filter((m) => m.id != "temporary"));
             setInputValue("");
           }
         }}

@@ -12,10 +12,8 @@ import { MessageWithUsers } from "../types/Message";
 import { useUserStore } from "../store/useUserStore";
 import { pusherClient } from "../lib/pusher-client";
 import { FriendshipWithUsers } from "../types/Friendship";
-import { Pencil, Trash2, LoaderCircle } from "lucide-react";
+import { Pencil, Trash2, LoaderCircle, Plus } from "lucide-react";
 import UserInterface from "../types/User";
-import { resolve } from "url";
-import { Message } from "@prisma/client";
 
 export default function PrivateChat({
   otherUserId,
@@ -33,6 +31,7 @@ export default function PrivateChat({
   const [newMessage, setNewMessage] = useState("");
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -330,15 +329,37 @@ export default function PrivateChat({
           }
         }}
       >
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.currentTarget.value)}
-          placeholder={`Conversar com ${
-            otherUser ? otherUser.username : "o usuário"
-          }`}
-          className="bg-[#21232b] w-full p-3 rounded-lg text-[#8aabc8] font-semibold outline-none text-lg"
-        />
+        <div className="w-full max-h-15 bg-[#21232b] flex items-center">
+          {/* #8b8d93 */}
+
+          <button
+            type="button"
+            className="w-10 mx-3 aspect-square hover:bg-white/20 transition-all rounded-lg flex items-center justify-center cursor-pointer"
+            onClick={() => inputRef.current?.click()}
+          >
+            <Plus
+              size={40}
+              className="left-0 top-0 text-[#8b8d93] hover:text-white transition-all"
+            />
+          </button>
+
+          <input
+            type="file"
+            ref={inputRef}
+            className="hidden"
+            accept="image/*"
+          />
+
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.currentTarget.value)}
+            placeholder={`Conversar com ${
+              otherUser ? otherUser.username : "o usuário"
+            }`}
+            className="flex-1 p-3 rounded-lg text-[#8aabc8] font-semibold outline-none text-lg"
+          />
+        </div>
       </form>
     </div>
   );

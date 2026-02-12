@@ -14,6 +14,7 @@ import { pusherClient } from "../lib/pusher-client";
 import { FriendshipWithUsers } from "../types/Friendship";
 import { Pencil, Trash2, LoaderCircle, Plus } from "lucide-react";
 import UserInterface from "../types/User";
+import Image from "next/image";
 
 export default function PrivateChat({
   otherUserId,
@@ -26,6 +27,8 @@ export default function PrivateChat({
   const [messages, setMessages] = useState<MessageWithUsers[]>([]);
   const [friendshipId, setFriendshipId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const [previewImage, setPreviewImage] = useState<string[]>([]);
 
   const [editing, setEditing] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -160,6 +163,15 @@ export default function PrivateChat({
       setMessages((prev) => prev.filter((m) => m.id != "temporary"));
       setInputValue("");
     }
+  };
+
+  const handleChangeImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (previewImage.length >= 4) return;
+    if (!e.target.files) return;
+    const file = e.target.files[0];
+    e.target.value = "";
+    const temporaryURL = URL.createObjectURL(file);
+    setPreviewImage((prev) => [...prev, temporaryURL]);
   };
 
   const handleDeleteMessage = async (messageId: string) => {
@@ -326,34 +338,70 @@ export default function PrivateChat({
         <div ref={scrollRef}></div>
       </div>
       <form className="flex p-4 gap-10" action={handleSendMessage}>
-        <div className="w-full max-h-15 bg-[#21232b] flex items-center">
-          <button
-            type="button"
-            className="w-10 mx-3 aspect-square hover:bg-white/20 transition-all rounded-lg flex items-center justify-center cursor-pointer"
-            onClick={() => inputRef.current?.click()}
-          >
-            <Plus
-              size={40}
-              className="left-0 top-0 text-[#8b8d93] hover:text-white transition-all"
+        <div className="w-full  bg-[#21232b] flex flex-col gap-5 rounded-lg">
+          {previewImage && previewImage.length > 0 && (
+            <div className="grid grid-cols-4 overflow-y-auto w-full h-100">
+              {previewImage.map((image, i) => {
+                return (
+                  <div key={i} className="relative m-5">
+                    <Image
+                      src={image}
+                      alt="preview"
+                      width={200}
+                      height={200}
+                      className="rounded-lg w-full h-auto object-contain bg-black/20 border border-white/10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute top-0 right-0 hover:scale-110 transition-all"
+                      onClick={() => {
+                        setPreviewImage((prev) =>
+                          prev.filter((img) => img != image),
+                        );
+                      }}
+                    >
+                      <Trash2
+                        className="text-red-500 bg-black/90 p-1 rounded-lg cursor-pointer"
+                        width={40}
+                        height={40}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center">
+            <button
+              type="button"
+              className="w-10 mx-3 aspect-square hover:bg-white/20 transition-all rounded-lg flex items-center justify-center cursor-pointer"
+              onClick={() => inputRef.current?.click()}
+            >
+              <Plus
+                size={40}
+                className="left-0 top-0 text-[#8b8d93] hover:text-white transition-all"
+              />
+            </button>
+
+            <input
+              type="file"
+              ref={inputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={(e) => handleChangeImage(e)}
             />
-          </button>
 
-          <input
-            type="file"
-            ref={inputRef}
-            className="hidden"
-            accept="image/*"
-          />
-
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.currentTarget.value)}
-            placeholder={`Conversar com ${
-              otherUser ? otherUser.username : "o usuário"
-            }`}
-            className="flex-1 p-3 rounded-lg text-[#8aabc8] font-semibold outline-none text-lg"
-          />
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.currentTarget.value)}
+              placeholder={`Conversar com ${
+                otherUser ? otherUser.username : "o usuário"
+              }`}
+              className="flex-1 p-3 rounded-lg text-[#8aabc8] font-semibold outline-none text-lg"
+            />
+          </div>
         </div>
       </form>
     </div>

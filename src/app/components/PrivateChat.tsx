@@ -97,6 +97,71 @@ export default function PrivateChat({
     };
   }, [otherUserId, user?.id]);
 
+  const handleEditMessage = async (messageId: string) => {
+    if (newMessage.length > 0) {
+      const allMessages = [...messages];
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id == messageId) return { ...m, message: newMessage };
+          return m;
+        }),
+      );
+
+      const res = await updateMessage(messageId, newMessage);
+
+      if ("error" in res) {
+        console.log("deu erro");
+        setMessages(allMessages);
+        setEditing("");
+      } else {
+        setEditing("");
+      }
+    }
+  };
+
+  const handleSendMessage = async () => {
+    const inputVal = inputValue;
+    setInputValue("");
+
+    const temporaryMessage: MessageWithUsers = {
+      id: "temporary",
+      sender: {
+        id: user!.id,
+        username: user!.username,
+        email: user!.email,
+        createdAt: user!.createdAt,
+      },
+      senderId: user!.id,
+      receiver: {
+        id: otherUser!.id,
+        username: otherUser!.username,
+        email: otherUser!.email,
+        createdAt: otherUser!.createdAt,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      message: inputVal,
+      receiverId: otherUserId as string,
+    };
+
+    setMessages((prev) => [...prev, temporaryMessage]);
+
+    const res = await sendMessage(
+      otherUserId as string,
+      inputVal,
+      friendshipId,
+    );
+
+    if ("error" in res) {
+      console.log("deu erro");
+      setMessages((prev) => prev.filter((m) => m.id != "temporary"));
+      setInputValue(inputVal);
+    } else {
+      setMessages((prev) => prev.filter((m) => m.id != "temporary"));
+      setInputValue("");
+    }
+  };
+
   const handleDeleteMessage = async (messageId: string) => {
     const allMessages = [...messages];
     setMessages((prev) => prev.filter((m) => m.id != messageId));
@@ -237,31 +302,7 @@ export default function PrivateChat({
                   editing == message.id && (
                     <form
                       className="flex p-4 gap-10"
-                      action={async (formData: FormData) => {
-                        if (newMessage.length > 0) {
-                          const allMessages = [...messages];
-                          setMessages((prev) =>
-                            prev.map((m) => {
-                              if (m.id == message.id)
-                                return { ...m, message: newMessage };
-                              return m;
-                            }),
-                          );
-
-                          const res = await updateMessage(
-                            message.id,
-                            newMessage,
-                          );
-
-                          if ("error" in res) {
-                            console.log("deu erro");
-                            setMessages(allMessages);
-                            setEditing("");
-                          } else {
-                            setEditing("");
-                          }
-                        }
-                      }}
+                      action={() => handleEditMessage(message.id)}
                       onKeyDown={(e) => {
                         if (e.key === "Escape") {
                           setNewMessage(message.message);
@@ -284,54 +325,8 @@ export default function PrivateChat({
         })}
         <div ref={scrollRef}></div>
       </div>
-      <form
-        className="flex p-4 gap-10"
-        action={async (formData: FormData) => {
-          const inputVal = inputValue;
-          setInputValue("");
-
-          const temporaryMessage: MessageWithUsers = {
-            id: "temporary",
-            sender: {
-              id: user!.id,
-              username: user!.username,
-              email: user!.email,
-              createdAt: user!.createdAt,
-            },
-            senderId: user!.id,
-            receiver: {
-              id: otherUser!.id,
-              username: otherUser!.username,
-              email: otherUser!.email,
-              createdAt: otherUser!.createdAt,
-            },
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            message: inputVal,
-            receiverId: otherUserId as string,
-          };
-
-          setMessages((prev) => [...prev, temporaryMessage]);
-
-          const res = await sendMessage(
-            otherUserId as string,
-            inputVal,
-            friendshipId,
-          );
-
-          if ("error" in res) {
-            console.log("deu erro");
-            setMessages((prev) => prev.filter((m) => m.id != "temporary"));
-            setInputValue(inputVal);
-          } else {
-            setMessages((prev) => prev.filter((m) => m.id != "temporary"));
-            setInputValue("");
-          }
-        }}
-      >
+      <form className="flex p-4 gap-10" action={handleSendMessage}>
         <div className="w-full max-h-15 bg-[#21232b] flex items-center">
-          {/* #8b8d93 */}
-
           <button
             type="button"
             className="w-10 mx-3 aspect-square hover:bg-white/20 transition-all rounded-lg flex items-center justify-center cursor-pointer"

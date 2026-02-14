@@ -401,6 +401,7 @@ export async function sendMessage(
       data: {
         senderId,
         receiverId,
+        images,
         message,
       },
       include: {
@@ -661,6 +662,7 @@ export async function _updateUserStatus(
 export async function updateMessage(
   messageId: string,
   newMessage: string,
+  newImages: string[],
 ): Promise<MessageWithUsers | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
@@ -685,6 +687,7 @@ export async function updateMessage(
       },
       data: {
         message: newMessage,
+        images: newImages,
       },
       include: {
         sender: {

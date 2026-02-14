@@ -34,9 +34,12 @@ export default function PrivateChat({
 
   const [editing, setEditing] = useState("");
   const [newMessage, setNewMessage] = useState("");
+  const [newImages, setNewImages] = useState<string[] | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -107,13 +110,15 @@ export default function PrivateChat({
       const allMessages = [...messages];
       setMessages((prev) =>
         prev.map((m) => {
-          if (m.id == messageId) return { ...m, message: newMessage };
+          if (m.id == messageId)
+            return { ...m, message: newMessage, images: newImages ?? [] };
           return m;
         }),
       );
 
-      const res = await updateMessage(messageId, newMessage);
+      const res = await updateMessage(messageId, newMessage, newImages ?? []);
 
+      if (res == null) return console.log("Res não existe");
       if ("error" in res) {
         console.log("deu erro");
         setMessages(allMessages);
@@ -146,13 +151,14 @@ export default function PrivateChat({
       createdAt: new Date(),
       updatedAt: new Date(),
       message: inputVal,
+      images: previewImage,
       receiverId: otherUserId as string,
     };
 
-    setMessages((prev) => [...prev, temporaryMessage]);
     let res;
 
     if (images.length > 0) {
+      setMessages((prev) => [...prev, temporaryMessage]);
       const form = new FormData();
       images.forEach((image) => {
         form.append("images", image);
@@ -166,7 +172,7 @@ export default function PrivateChat({
         })
         .then((res) => {
           console.log("Deu certo", res.data);
-          return res.data;
+          return res.data.urls;
         })
         .catch((err) => console.log("Deu erro", err));
 
@@ -177,12 +183,17 @@ export default function PrivateChat({
         friendshipId,
       );
     } else {
-      res = await sendMessage(
-        otherUserId as string,
-        inputVal,
-        [],
-        friendshipId,
-      );
+      if (inputVal == "") {
+        return console.log("Mensagem está vazia");
+      } else {
+        setMessages((prev) => [...prev, temporaryMessage]);
+        res = await sendMessage(
+          otherUserId as string,
+          inputVal,
+          [],
+          friendshipId,
+        );
+      }
     }
 
     if ("error" in res!) {
@@ -210,6 +221,7 @@ export default function PrivateChat({
     setMessages((prev) => prev.filter((m) => m.id != messageId));
     const res = await deleteMessage(messageId);
 
+    if (!res) return console.log("Res não existe");
     if ("error" in res) {
       console.log("deu erro");
       setMessages(allMessages);
@@ -228,6 +240,7 @@ export default function PrivateChat({
           </div>
         )}
         {messages.map((message: MessageWithUsers, i: number) => {
+          if (newImages == null) setNewImages(message.images);
           const fullDate = new Date(message.createdAt).toLocaleString();
 
           const date = fullDate.split(",")[0];
@@ -317,6 +330,22 @@ export default function PrivateChat({
                 )}
                 {editing != message.id ? (
                   <h1 className="text-[#c2c2c5] text-lg relative">
+                    {message.images.length > 0 && (
+                      <div className="flex gap-3 max-w-1/5">
+                        {message.images.map((image, i) => {
+                          return (
+                            <Image
+                              src={image}
+                              alt={`image-${i}`}
+                              key={i}
+                              width={200}
+                              height={200}
+                              className="rounded-lg w-full h-auto object-contain"
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
                     {message.message}{" "}
                     {isUpdated && (
                       <span className="text-base font-normal text-[#75869f]">
@@ -344,18 +373,57 @@ export default function PrivateChat({
                 ) : (
                   editing == message.id && (
                     <form
-                      className="flex p-4 gap-10"
+                      className="flex flex-col p-4 gap-10"
                       action={() => handleEditMessage(message.id)}
                       onKeyDown={(e) => {
                         if (e.key === "Escape") {
+                          setNewImages(message.images);
                           setNewMessage(message.message);
                           setEditing("");
                         }
                       }}
                     >
+                      {message.images && message.images.length > 0 && (
+                        <div className="grid grid-cols-4 overflow-y-auto w-full h-100">
+                          {newImages?.map((image, i) => {
+                            return (
+                              <div key={i} className="relative m-5">
+                                <Image
+                                  src={image}
+                                  alt="preview"
+                                  width={200}
+                                  height={200}
+                                  className="rounded-lg w-full h-auto object-contain bg-black/20 border border-white/10"
+                                />
+                                <button
+                                  type="button"
+                                  className="absolute top-0 right-0 hover:scale-110 transition-all"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+
+                                    setNewImages((prev) => {
+                                      if (prev == null) return null;
+                                      return prev.filter((img) => img != image);
+                                    });
+
+                                    editInputRef.current?.focus();
+                                  }}
+                                >
+                                  <Trash2
+                                    className="text-red-500 bg-black/90 p-1 rounded-lg cursor-pointer"
+                                    width={40}
+                                    height={40}
+                                  />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                       <input
                         className="text-[#c2c2c5] mb-2 text-lg relative w-full p-5 border-2 border-gray-700/50 rounded-sm bg-gray-700/20 outline-none break-words"
                         onChange={(e) => setNewMessage(e.target.value)}
+                        ref={editInputRef}
                         value={newMessage}
                         autoFocus
                       />

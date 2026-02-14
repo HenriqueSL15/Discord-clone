@@ -376,8 +376,9 @@ export async function getMessagesHistory(
 export async function sendMessage(
   receiverId: string,
   message: string,
+  images: string[],
   friendshipId: string,
-) {
+): Promise<MessageWithUsers | undefined> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 

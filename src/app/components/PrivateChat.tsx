@@ -15,6 +15,7 @@ import { FriendshipWithUsers } from "../types/Friendship";
 import { Pencil, Trash2, LoaderCircle, Plus } from "lucide-react";
 import UserInterface from "../types/User";
 import Image from "next/image";
+import api from "../api/api";
 
 export default function PrivateChat({
   otherUserId,
@@ -28,6 +29,7 @@ export default function PrivateChat({
   const [friendshipId, setFriendshipId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const [images, setImages] = useState<File[]>([]);
   const [previewImage, setPreviewImage] = useState<string[]>([]);
 
   const [editing, setEditing] = useState("");
@@ -148,14 +150,42 @@ export default function PrivateChat({
     };
 
     setMessages((prev) => [...prev, temporaryMessage]);
+    let res;
 
-    const res = await sendMessage(
-      otherUserId as string,
-      inputVal,
-      friendshipId,
-    );
+    if (images.length > 0) {
+      const form = new FormData();
+      images.forEach((image) => {
+        form.append("images", image);
+      });
 
-    if ("error" in res) {
+      const imagesURLs = await api
+        .post("/api/messageImages", form, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((res) => {
+          console.log("Deu certo", res.data);
+          return res.data;
+        })
+        .catch((err) => console.log("Deu erro", err));
+
+      res = await sendMessage(
+        otherUserId as string,
+        inputVal,
+        imagesURLs,
+        friendshipId,
+      );
+    } else {
+      res = await sendMessage(
+        otherUserId as string,
+        inputVal,
+        [],
+        friendshipId,
+      );
+    }
+
+    if ("error" in res!) {
       console.log("deu erro");
       setMessages((prev) => prev.filter((m) => m.id != "temporary"));
       setInputValue(inputVal);
@@ -171,6 +201,7 @@ export default function PrivateChat({
     const file = e.target.files[0];
     e.target.value = "";
     const temporaryURL = URL.createObjectURL(file);
+    setImages((prev) => [...prev, file]);
     setPreviewImage((prev) => [...prev, temporaryURL]);
   };
 
@@ -357,6 +388,9 @@ export default function PrivateChat({
                       onClick={() => {
                         setPreviewImage((prev) =>
                           prev.filter((img) => img != image),
+                        );
+                        setImages((prev) =>
+                          prev.filter((img, index) => i != index),
                         );
                       }}
                     >

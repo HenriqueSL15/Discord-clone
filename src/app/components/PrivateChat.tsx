@@ -105,33 +105,48 @@ export default function PrivateChat({
     };
   }, [otherUserId, user?.id]);
 
-  const handleEditMessage = async (messageId: string) => {
-    if (newMessage.length > 0) {
-      const allMessages = [...messages];
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.id == messageId)
-            return { ...m, message: newMessage, images: newImages ?? [] };
-          return m;
-        }),
-      );
+  const handleEditMessage = async (
+    messageId: string,
+    previousMessage: string,
+    previousImages: string[],
+  ) => {
+    const isMessageDifferent = previousMessage != newMessage;
+    const areImagesDifferent = previousImages != newImages;
 
-      const res = await updateMessage(messageId, newMessage, newImages ?? []);
+    if (!areImagesDifferent && !isMessageDifferent)
+      return console.log("Nada mudou");
+    if (newImages && newImages.length == 0 && newMessage.length == 0)
+      return console.log("Sem imagens não pode ficar sem texto");
 
-      if (res == null) return console.log("Res não existe");
-      if ("error" in res) {
-        console.log("deu erro");
-        setMessages(allMessages);
-        setEditing("");
-      } else {
-        setEditing("");
-      }
+    const allMessages = [...messages];
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id == messageId)
+          return { ...m, message: newMessage, images: newImages ?? [] };
+        return m;
+      }),
+    );
+
+    const res = await updateMessage(messageId, newMessage, newImages ?? []);
+
+    if (res == null) return console.log("Res não existe");
+    if ("error" in res) {
+      console.log("deu erro");
+      setMessages(allMessages);
+      setEditing("");
+    } else {
+      setEditing("");
     }
   };
 
   const handleSendMessage = async () => {
     const inputVal = inputValue;
     setInputValue("");
+
+    const tempPreviewImages = [...previewImage];
+    const tempImages = [...images];
+    setImages([]);
+    setPreviewImage([]);
 
     const temporaryMessage: MessageWithUsers = {
       id: "temporary",
@@ -151,7 +166,7 @@ export default function PrivateChat({
       createdAt: new Date(),
       updatedAt: new Date(),
       message: inputVal,
-      images: previewImage,
+      images: tempPreviewImages,
       receiverId: otherUserId as string,
     };
 
@@ -183,22 +198,22 @@ export default function PrivateChat({
         friendshipId,
       );
     } else {
-      if (inputVal == "") {
-        return console.log("Mensagem está vazia");
-      } else {
-        setMessages((prev) => [...prev, temporaryMessage]);
-        res = await sendMessage(
-          otherUserId as string,
-          inputVal,
-          [],
-          friendshipId,
-        );
-      }
+      if (inputVal == "") return console.log("Mensagem está vazia");
+
+      setMessages((prev) => [...prev, temporaryMessage]);
+      res = await sendMessage(
+        otherUserId as string,
+        inputVal,
+        [],
+        friendshipId,
+      );
     }
 
     if ("error" in res!) {
       console.log("deu erro");
       setMessages((prev) => prev.filter((m) => m.id != "temporary"));
+      setImages(tempImages);
+      setPreviewImage(tempPreviewImages);
       setInputValue(inputVal);
     } else {
       setMessages((prev) => prev.filter((m) => m.id != "temporary"));
@@ -374,7 +389,18 @@ export default function PrivateChat({
                   editing == message.id && (
                     <form
                       className="flex flex-col p-4 gap-10"
-                      action={() => handleEditMessage(message.id)}
+                      onLoad={() => {
+                        setNewImages(message.images);
+                        setNewMessage(message.message);
+                        editInputRef.current?.focus();
+                      }}
+                      action={() =>
+                        handleEditMessage(
+                          message.id,
+                          message.message,
+                          message.images,
+                        )
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Escape") {
                           setNewImages(message.images);

@@ -11,6 +11,14 @@ import UserInterface from "../types/User";
 import { pusherServer } from "../lib/pusher";
 import { Friendship, FriendshipStatus, Message } from "@prisma/client";
 
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 /**
  * Registra um novo usuário, faz o hash da senha, cria um cookie de sessão e redireciona para a página principal.
  * @param {FormData} formData - Os dados do formulário de registro, contendo email, nome de usuário e senha.
@@ -680,7 +688,26 @@ export async function updateMessage(
   const userId = sessionData.userId;
 
   try {
-    const message = await prisma.message.update({
+    const message = await prisma.message.findUnique({
+      where: {
+        id: messageId,
+      },
+    });
+
+    if (!message) {
+      console.error("Mensagem não encontrada");
+      return null;
+    }
+
+    if (message) {
+      const diffUrl = message.images.filter((url) => !newImages.includes(url));
+
+      if (diffUrl.length > 0) {
+        await deleteImagesFromCloud(diffUrl);
+      }
+    }
+
+    const updatedMessage = await prisma.message.update({
       where: {
         id: messageId,
         senderId: userId,
@@ -709,7 +736,7 @@ export async function updateMessage(
       },
     });
 
-    return message;
+    return updatedMessage;
   } catch (err) {
     console.log(err);
     return null;
@@ -743,16 +770,55 @@ export async function deleteMessage(
   const userId = sessionData.userId;
 
   try {
-    const message = await prisma.message.delete({
+    const message = await prisma.message.findUnique({
       where: {
         id: messageId,
         senderId: userId,
       },
     });
 
-    return message;
+    if (!message) throw new Error("Não existe mensagem");
+
+    await deleteImagesFromCloud(message.images);
+
+    const deletedMessage = await prisma.message.delete({
+      where: {
+        id: messageId,
+        senderId: userId,
+      },
+    });
+
+    return deletedMessage;
   } catch (err) {
     console.log(err);
     return null;
   }
+}
+
+async function deleteImagesFromCloud(urls: string[]): Promise<boolean> {
+  try {
+    const deletePromises = urls.map((url) => {
+      const publicId = extractPublicId(url);
+      if (!publicId)
+        throw new Error(
+          "Não foi possível extrair o public id da url fornecida",
+        );
+
+      return cloudinary.uploader.destroy(publicId);
+    });
+
+    const results = await Promise.all(deletePromises);
+
+    return results.every((res) => res.result === "ok");
+  } catch (err) {
+    console.error(err);
+  }
+  return false;
+}
+
+function extractPublicId(url: string): string | null {
+  const regex = /\/v\d+\/(.+)\.[a-zA-Z0-9]+$/;
+  const match = url.match(regex);
+
+  return match ? match[1] : null;
 }

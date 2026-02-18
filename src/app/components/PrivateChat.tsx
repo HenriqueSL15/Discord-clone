@@ -110,8 +110,9 @@ export default function PrivateChat({
     previousMessage: string,
     previousImages: string[],
   ) => {
-    const isMessageDifferent = previousMessage != newMessage;
-    const areImagesDifferent = previousImages != newImages;
+    const isMessageDifferent = previousMessage.trim() != newMessage.trim();
+    const areImagesDifferent =
+      JSON.stringify(previousImages) != JSON.stringify(newImages);
 
     if (!areImagesDifferent && !isMessageDifferent)
       return console.log("Nada mudou");
@@ -122,7 +123,12 @@ export default function PrivateChat({
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id == messageId)
-          return { ...m, message: newMessage, images: newImages ?? [] };
+          return {
+            ...m,
+            message: newMessage,
+            images: newImages ?? [],
+            updatedAt: new Date(),
+          };
         return m;
       }),
     );

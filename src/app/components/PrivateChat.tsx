@@ -16,6 +16,7 @@ import { Pencil, Trash2, LoaderCircle, Plus } from "lucide-react";
 import UserInterface from "../types/User";
 import Image from "next/image";
 import api from "../api/api";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function PrivateChat({
   otherUserId,
@@ -40,6 +41,8 @@ export default function PrivateChat({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const editInputRef = useRef<HTMLInputElement>(null);
+
+  const [selectedImage, setSelectedImage] = useState("");
 
   const scrollToBottom = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -251,6 +254,77 @@ export default function PrivateChat({
 
   return (
     <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end h-screen">
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
+          onClick={() => setSelectedImage("")}
+        >
+          <TransformWrapper
+            initialScale={1}
+            minScale={1}
+            maxScale={6}
+            centerOnInit={true}
+            wheel={{ step: 1 }}
+            limitToBounds={true}
+          >
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <>
+                <div
+                  className="absolute top-5 right-5 z-50 flex gap-2 pointer-events-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => zoomIn()}
+                    className="bg-white/20 p-2 rounded text-white cursor-pointer"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => zoomOut()}
+                    className="bg-white/20 p-2 rounded text-white cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <button
+                    onClick={() => {
+                      resetTransform();
+                      setSelectedImage("");
+                    }}
+                    className="bg-red-500/80 p-2 rounded text-white cursor-pointer"
+                  >
+                    X
+                  </button>
+                </div>
+
+                <TransformComponent
+                  wrapperStyle={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  contentStyle={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="cursor-grab active:cursor-grabbing"
+                  >
+                    <img
+                      src={selectedImage}
+                      alt="Zoomed Preview"
+                      className="max-w-[100vw] max-h-[100vh] object-contain shadow-2xl"
+                    />
+                  </div>
+                </TransformComponent>
+              </>
+            )}
+          </TransformWrapper>
+        </div>
+      )}
       <div className="flex flex-col w-full flex-1 p-3 overflow-y-auto">
         {isLoading && (
           <div className="flex items-center justify-center flex-1 gap-2">
@@ -362,6 +436,10 @@ export default function PrivateChat({
                               width={200}
                               height={200}
                               className="rounded-lg w-full h-auto object-contain"
+                              onClick={() => {
+                                setSelectedImage(image);
+                                console.log("Nova imagem clicada", image);
+                              }}
                             />
                           );
                         })}

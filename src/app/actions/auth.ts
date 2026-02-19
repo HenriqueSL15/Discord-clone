@@ -9,7 +9,7 @@ import { FriendshipWithUsers } from "../types/Friendship";
 import { MessageWithUsers } from "../types/Message";
 import UserInterface from "../types/User";
 import { pusherServer } from "../lib/pusher";
-import { Friendship, FriendshipStatus, Message } from "@prisma/client";
+import { FriendshipStatus, Message } from "@prisma/client";
 
 import { v2 as cloudinary } from "cloudinary";
 
@@ -691,6 +691,7 @@ export async function updateMessage(
     const message = await prisma.message.findUnique({
       where: {
         id: messageId,
+        senderId: userId,
       },
     });
 
@@ -703,7 +704,7 @@ export async function updateMessage(
       const diffUrl = message.images.filter((url) => !newImages.includes(url));
 
       if (diffUrl.length > 0) {
-        await deleteImagesFromCloud(diffUrl);
+        deleteImagesFromCloud(diffUrl);
       }
     }
 
@@ -770,23 +771,16 @@ export async function deleteMessage(
   const userId = sessionData.userId;
 
   try {
-    const message = await prisma.message.findUnique({
-      where: {
-        id: messageId,
-        senderId: userId,
-      },
-    });
-
-    if (!message) throw new Error("Não existe mensagem");
-
-    await deleteImagesFromCloud(message.images);
-
     const deletedMessage = await prisma.message.delete({
       where: {
         id: messageId,
         senderId: userId,
       },
     });
+
+    if (!deletedMessage) throw new Error("Não existe mensagem");
+
+    deleteImagesFromCloud(deletedMessage.images);
 
     return deletedMessage;
   } catch (err) {
@@ -795,7 +789,7 @@ export async function deleteMessage(
   }
 }
 
-async function deleteImagesFromCloud(urls: string[]): Promise<boolean> {
+function deleteImagesFromCloud(urls: string[]): boolean {
   try {
     const deletePromises = urls.map((url) => {
       const publicId = extractPublicId(url);
@@ -807,9 +801,11 @@ async function deleteImagesFromCloud(urls: string[]): Promise<boolean> {
       return cloudinary.uploader.destroy(publicId);
     });
 
-    const results = await Promise.all(deletePromises);
+    Promise.all(deletePromises).catch((err) => {
+      console.error("ERRO CRÍTICO no brackground ao editar imagens:", err);
+    });
 
-    return results.every((res) => res.result === "ok");
+    return true;
   } catch (err) {
     console.error(err);
   }

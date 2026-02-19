@@ -1,42 +1,15 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import {
-  deleteMessage,
-  getMessagesHistory,
-  getOtherUserInfo,
-  getUserFriendships,
-  sendMessage,
-  updateMessage,
-} from "../actions/auth";
+import React, { useEffect, useRef, useState } from "react";
 import { MessageWithUsers } from "../types/Message";
 import { useUserStore } from "../store/useUserStore";
-import { pusherClient } from "../lib/pusher-client";
-import { FriendshipWithUsers } from "../types/Friendship";
-import { Pencil, Trash2, LoaderCircle, Plus } from "lucide-react";
-import UserInterface from "../types/User";
-import Image from "next/image";
-import api from "../api/api";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { LoaderCircle } from "lucide-react";
+import ZoomedImage from "./ZoomedImage";
+import Message from "./Message";
+import EditingMessageBox from "./EditingMessageBox";
+import MessageInput from "./MessageInput";
+import { usePrivateChat } from "../hooks/usePrivateChat";
 
-export default function PrivateChat({
-  otherUserId,
-}: {
-  otherUserId: string | null;
-}) {
-  const user = useUserStore((state) => state.user);
-  const [otherUser, setOtherUser] = useState<UserInterface>();
-  const [inputValue, setInputValue] = useState("");
-  const [messages, setMessages] = useState<MessageWithUsers[]>([]);
-  const [friendshipId, setFriendshipId] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [images, setImages] = useState<File[]>([]);
-  const [previewImage, setPreviewImage] = useState<string[]>([]);
-
-  const [editing, setEditing] = useState("");
-  const [newMessage, setNewMessage] = useState("");
-  const [newImages, setNewImages] = useState<string[] | null>(null);
-
+export default function PrivateChat({ otherUserId }: { otherUserId: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,286 +17,26 @@ export default function PrivateChat({
 
   const [selectedImage, setSelectedImage] = useState("");
 
+  const user = useUserStore((state) => state.user);
+
   const scrollToBottom = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const { messages, isLoading, otherUser, editor, composer, deleting } =
+    usePrivateChat(otherUserId);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (!otherUserId) {
-      return;
-    }
-
-    let channel: any;
-
-    const fetchHistory = async () => {
-      try {
-        setIsLoading(true);
-        const res = await getMessagesHistory(otherUserId);
-        const otherUserInfo = await getOtherUserInfo(otherUserId);
-        const friendships = await getUserFriendships();
-
-        if (otherUserInfo) {
-          setOtherUser(otherUserInfo);
-        }
-
-        if (friendships) {
-          const currentFriendship = friendships.find(
-            (friendship: FriendshipWithUsers) =>
-              friendship.senderId == otherUserInfo?.id ||
-              friendship.receiverId == otherUserInfo?.id,
-          );
-
-          if (currentFriendship) {
-            setFriendshipId(currentFriendship.id);
-            channel = pusherClient.subscribe(`${currentFriendship.id}`);
-
-            channel.unbind("new-message");
-            channel.bind("new-message", (data: MessageWithUsers) => {
-              setMessages((prev) => {
-                if (prev.find((m) => m.id == data.id)) return prev;
-                return [...prev, data];
-              });
-            });
-          }
-        }
-        if (res) setMessages(res);
-      } catch (err) {
-        console.log("Deu erro", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchHistory();
-
-    return () => {
-      if (channel) {
-        channel.unbind("new-message");
-        pusherClient.unsubscribe(`${channel.name}`);
-      }
-    };
-  }, [otherUserId, user?.id]);
-
-  const handleEditMessage = async (
-    messageId: string,
-    previousMessage: string,
-    previousImages: string[],
-  ) => {
-    const isMessageDifferent = previousMessage.trim() != newMessage.trim();
-    const areImagesDifferent =
-      JSON.stringify(previousImages) != JSON.stringify(newImages);
-
-    if (!areImagesDifferent && !isMessageDifferent)
-      return console.log("Nada mudou");
-    if (newImages && newImages.length == 0 && newMessage.length == 0)
-      return console.log("Sem imagens não pode ficar sem texto");
-
-    const allMessages = [...messages];
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id == messageId)
-          return {
-            ...m,
-            message: newMessage,
-            images: newImages ?? [],
-            updatedAt: new Date(),
-          };
-        return m;
-      }),
-    );
-
-    const res = await updateMessage(messageId, newMessage, newImages ?? []);
-
-    if (res == null) return console.log("Res não existe");
-    if ("error" in res) {
-      console.log("deu erro");
-      setMessages(allMessages);
-      setEditing("");
-    } else {
-      setEditing("");
-    }
-  };
-
-  const handleSendMessage = async () => {
-    const inputVal = inputValue;
-    setInputValue("");
-
-    const tempPreviewImages = [...previewImage];
-    const tempImages = [...images];
-    setImages([]);
-    setPreviewImage([]);
-
-    const temporaryMessage: MessageWithUsers = {
-      id: "temporary",
-      sender: {
-        id: user!.id,
-        username: user!.username,
-        email: user!.email,
-        createdAt: user!.createdAt,
-      },
-      senderId: user!.id,
-      receiver: {
-        id: otherUser!.id,
-        username: otherUser!.username,
-        email: otherUser!.email,
-        createdAt: otherUser!.createdAt,
-      },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      message: inputVal,
-      images: tempPreviewImages,
-      receiverId: otherUserId as string,
-    };
-
-    let res;
-
-    if (images.length > 0) {
-      setMessages((prev) => [...prev, temporaryMessage]);
-      const form = new FormData();
-      images.forEach((image) => {
-        form.append("images", image);
-      });
-
-      const imagesURLs = await api
-        .post("/api/messageImages", form, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        })
-        .then((res) => {
-          console.log("Deu certo", res.data);
-          return res.data.urls;
-        })
-        .catch((err) => console.log("Deu erro", err));
-
-      res = await sendMessage(
-        otherUserId as string,
-        inputVal,
-        imagesURLs,
-        friendshipId,
-      );
-    } else {
-      if (inputVal == "") return console.log("Mensagem está vazia");
-
-      setMessages((prev) => [...prev, temporaryMessage]);
-      res = await sendMessage(
-        otherUserId as string,
-        inputVal,
-        [],
-        friendshipId,
-      );
-    }
-
-    if ("error" in res!) {
-      console.log("deu erro");
-      setMessages((prev) => prev.filter((m) => m.id != "temporary"));
-      setImages(tempImages);
-      setPreviewImage(tempPreviewImages);
-      setInputValue(inputVal);
-    } else {
-      setMessages((prev) => prev.filter((m) => m.id != "temporary"));
-      setInputValue("");
-    }
-  };
-
-  const handleChangeImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (previewImage.length >= 4) return;
-    if (!e.target.files) return;
-    const file = e.target.files[0];
-    e.target.value = "";
-    const temporaryURL = URL.createObjectURL(file);
-    setImages((prev) => [...prev, file]);
-    setPreviewImage((prev) => [...prev, temporaryURL]);
-  };
-
-  const handleDeleteMessage = async (messageId: string) => {
-    const allMessages = [...messages];
-    setMessages((prev) => prev.filter((m) => m.id != messageId));
-    const res = await deleteMessage(messageId);
-
-    if (!res) return console.log("Res não existe");
-    if ("error" in res) {
-      console.log("deu erro");
-      setMessages(allMessages);
-    }
-  };
-
   return (
     <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end h-screen">
       {selectedImage && (
-        <div
-          className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
-          onClick={() => setSelectedImage("")}
-        >
-          <TransformWrapper
-            initialScale={1}
-            minScale={1}
-            maxScale={6}
-            centerOnInit={true}
-            wheel={{ step: 1 }}
-            limitToBounds={true}
-          >
-            {({ zoomIn, zoomOut, resetTransform }) => (
-              <>
-                <div
-                  className="absolute top-5 right-5 z-50 flex gap-2 pointer-events-auto"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    onClick={() => zoomIn()}
-                    className="bg-white/20 p-2 rounded text-white cursor-pointer"
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => zoomOut()}
-                    className="bg-white/20 p-2 rounded text-white cursor-pointer"
-                  >
-                    -
-                  </button>
-                  <button
-                    onClick={() => {
-                      resetTransform();
-                      setSelectedImage("");
-                    }}
-                    className="bg-red-500/80 p-2 rounded text-white cursor-pointer"
-                  >
-                    X
-                  </button>
-                </div>
-
-                <TransformComponent
-                  wrapperStyle={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                  contentStyle={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="cursor-grab active:cursor-grabbing"
-                  >
-                    <img
-                      src={selectedImage}
-                      alt="Zoomed Preview"
-                      className="max-w-[100vw] max-h-[100vh] object-contain shadow-2xl"
-                    />
-                  </div>
-                </TransformComponent>
-              </>
-            )}
-          </TransformWrapper>
-        </div>
+        <ZoomedImage
+          image={selectedImage}
+          setSelectedImage={setSelectedImage}
+        />
       )}
       <div className="flex flex-col w-full flex-1 p-3 overflow-y-auto">
         {isLoading && (
@@ -335,7 +48,6 @@ export default function PrivateChat({
           </div>
         )}
         {messages.map((message: MessageWithUsers, i: number) => {
-          if (newImages == null) setNewImages(message.images);
           const fullDate = new Date(message.createdAt).toLocaleString();
 
           const date = fullDate.split(",")[0];
@@ -423,121 +135,31 @@ export default function PrivateChat({
                     </span>
                   </h1>
                 )}
-                {editing != message.id ? (
-                  <h1 className="text-[#c2c2c5] text-lg relative">
-                    {message.images.length > 0 && (
-                      <div className="flex gap-3 max-w-1/5">
-                        {message.images.map((image, i) => {
-                          return (
-                            <Image
-                              src={image}
-                              alt={`image-${i}`}
-                              key={i}
-                              width={200}
-                              height={200}
-                              className="rounded-lg w-full h-auto object-contain"
-                              onClick={() => {
-                                setSelectedImage(image);
-                                console.log("Nova imagem clicada", image);
-                              }}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    {message.message}{" "}
-                    {isUpdated && (
-                      <span className="text-base font-normal text-[#75869f]">
-                        (editado)
-                      </span>
-                    )}
-                    {message.senderId == user?.id && (
-                      <div className="flex gap-3 absolute top-1 right-1 items-center">
-                        <Pencil
-                          size={20}
-                          className="opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-110 transition-transform"
-                          onClick={() => {
-                            setEditing(message.id);
-                            setNewMessage(message.message);
-                          }}
-                        />
-                        <Trash2
-                          size={20}
-                          className="opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-110 transition-transform"
-                          onClick={() => handleDeleteMessage(message.id)}
-                        />
-                      </div>
-                    )}
-                  </h1>
+                {editor.id != message.id ? (
+                  <Message
+                    user={user}
+                    message={message}
+                    isUpdated={isUpdated}
+                    setSelectedImage={setSelectedImage}
+                    setEditing={editor.setEditing}
+                    setNewMessage={editor.setNewMessage}
+                    handleDeleteMessage={deleting.handleDeleteMessage}
+                    setNewImages={editor.setNewImages}
+                  />
                 ) : (
-                  editing == message.id && (
-                    <form
-                      className="flex flex-col p-4 gap-10"
-                      onLoad={() => {
-                        setNewImages(message.images);
-                        setNewMessage(message.message);
-                        editInputRef.current?.focus();
-                      }}
-                      action={() =>
-                        handleEditMessage(
-                          message.id,
-                          message.message,
-                          message.images,
-                        )
+                  editor.id == message.id && (
+                    <EditingMessageBox
+                      message={message}
+                      editInputRef={
+                        editInputRef as React.RefObject<HTMLInputElement>
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setNewImages(message.images);
-                          setNewMessage(message.message);
-                          setEditing("");
-                        }
-                      }}
-                    >
-                      {message.images && message.images.length > 0 && (
-                        <div className="grid grid-cols-4 overflow-y-auto w-full h-100">
-                          {newImages?.map((image, i) => {
-                            return (
-                              <div key={i} className="relative m-5">
-                                <Image
-                                  src={image}
-                                  alt="preview"
-                                  width={200}
-                                  height={200}
-                                  className="rounded-lg w-full h-auto object-contain bg-black/20 border border-white/10"
-                                />
-                                <button
-                                  type="button"
-                                  className="absolute top-0 right-0 hover:scale-110 transition-all"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-
-                                    setNewImages((prev) => {
-                                      if (prev == null) return null;
-                                      return prev.filter((img) => img != image);
-                                    });
-
-                                    editInputRef.current?.focus();
-                                  }}
-                                >
-                                  <Trash2
-                                    className="text-red-500 bg-black/90 p-1 rounded-lg cursor-pointer"
-                                    width={40}
-                                    height={40}
-                                  />
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <input
-                        className="text-[#c2c2c5] mb-2 text-lg relative w-full p-5 border-2 border-gray-700/50 rounded-sm bg-gray-700/20 outline-none break-words"
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        ref={editInputRef}
-                        value={newMessage}
-                        autoFocus
-                      />
-                    </form>
+                      newImages={editor.newImages}
+                      newMessage={editor.newMessage}
+                      handleEditMessage={editor.handleEditMessage}
+                      setEditing={editor.setEditing}
+                      setNewMessage={editor.setNewMessage}
+                      setNewImages={editor.setNewImages}
+                    />
                   )
                 )}
               </div>
@@ -546,76 +168,18 @@ export default function PrivateChat({
         })}
         <div ref={scrollRef}></div>
       </div>
-      <form className="flex p-4 gap-10" action={handleSendMessage}>
-        <div className="w-full  bg-[#21232b] flex flex-col gap-5 rounded-lg">
-          {previewImage && previewImage.length > 0 && (
-            <div className="grid grid-cols-4 overflow-y-auto w-full h-100">
-              {previewImage.map((image, i) => {
-                return (
-                  <div key={i} className="relative m-5">
-                    <Image
-                      src={image}
-                      alt="preview"
-                      width={200}
-                      height={200}
-                      className="rounded-lg w-full h-auto object-contain bg-black/20 border border-white/10"
-                    />
-                    <button
-                      type="button"
-                      className="absolute top-0 right-0 hover:scale-110 transition-all"
-                      onClick={() => {
-                        setPreviewImage((prev) =>
-                          prev.filter((img) => img != image),
-                        );
-                        setImages((prev) =>
-                          prev.filter((img, index) => i != index),
-                        );
-                      }}
-                    >
-                      <Trash2
-                        className="text-red-500 bg-black/90 p-1 rounded-lg cursor-pointer"
-                        width={40}
-                        height={40}
-                      />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="flex items-center">
-            <button
-              type="button"
-              className="w-10 mx-3 aspect-square hover:bg-white/20 transition-all rounded-lg flex items-center justify-center cursor-pointer"
-              onClick={() => inputRef.current?.click()}
-            >
-              <Plus
-                size={40}
-                className="left-0 top-0 text-[#8b8d93] hover:text-white transition-all"
-              />
-            </button>
-
-            <input
-              type="file"
-              ref={inputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={(e) => handleChangeImage(e)}
-            />
-
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.currentTarget.value)}
-              placeholder={`Conversar com ${
-                otherUser ? otherUser.username : "o usuário"
-              }`}
-              className="flex-1 p-3 rounded-lg text-[#8aabc8] font-semibold outline-none text-lg"
-            />
-          </div>
-        </div>
-      </form>
+      <MessageInput
+        inputValue={composer.inputValue}
+        setInputValue={composer.setInputValue}
+        handleSendMessage={composer.handleSendMessage}
+        previewImage={composer.previewImage}
+        setPreviewImage={composer.setPreviewImage}
+        images={composer.images}
+        setImages={composer.setImages}
+        inputRef={inputRef as React.RefObject<HTMLInputElement>}
+        handleChangeImage={composer.handleChangeImage}
+        otherUser={otherUser}
+      />
     </div>
   );
 }

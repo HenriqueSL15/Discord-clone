@@ -17,7 +17,7 @@ interface UserState {
       | ((prev: FriendshipWithUsers[] | null) => FriendshipWithUsers[] | null),
   ) => void;
 
-  page: string | null;
+  page: string;
   setPage: (page: string) => void;
 
   modal: string | null;
@@ -39,7 +39,7 @@ export const useUserStore = create<UserState>()(
               : updater,
         })),
 
-      page: null as string | null,
+      page: "",
       setPage: (page: string) => set({ page }),
 
       modal: null as string | null,

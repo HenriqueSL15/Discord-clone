@@ -128,13 +128,9 @@ export function usePrivateChat(otherUserId: string) {
   };
 
   const handleSendMessage = async () => {
-    const inputVal = inputValue;
-    setInputValue("");
-
+    const inputVal = inputValue.trim();
     const tempPreviewImages = [...previewImage];
     const tempImages = [...images];
-    setImages([]);
-    setPreviewImage([]);
 
     const temporaryMessage: MessageWithUsers = {
       id: "temporary",
@@ -161,6 +157,9 @@ export function usePrivateChat(otherUserId: string) {
     let res;
 
     if (images.length > 0) {
+      setInputValue("");
+      setImages([]);
+      setPreviewImage([]);
       setMessages((prev) => [...prev, temporaryMessage]);
       const form = new FormData();
       images.forEach((image) => {
@@ -188,6 +187,9 @@ export function usePrivateChat(otherUserId: string) {
     } else {
       if (inputVal == "") return console.log("Mensagem está vazia");
 
+      setInputValue("");
+      setImages([]);
+      setPreviewImage([]);
       setMessages((prev) => [...prev, temporaryMessage]);
       res = await sendMessage(
         otherUserId as string,

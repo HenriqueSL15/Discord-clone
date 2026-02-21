@@ -51,7 +51,6 @@ export default function Message({
       {message.senderId == user?.id && (
         <div className="flex gap-3 absolute top-1 right-1 items-center">
           <Pencil
-            data-testid="edit-message"
             size={20}
             className="opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-110 transition-transform"
             onClick={() => {
@@ -61,7 +60,6 @@ export default function Message({
             }}
           />
           <Trash2
-            data-testid="delete-message"
             size={20}
             className="opacity-0 group-hover:opacity-100 cursor-pointer hover:scale-110 transition-transform"
             onClick={() => handleDeleteMessage(message.id)}

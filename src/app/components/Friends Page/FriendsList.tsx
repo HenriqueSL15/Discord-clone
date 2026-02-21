@@ -69,7 +69,7 @@ export default function FriendsList({
                         }
                       >
                         {" "}
-                        <Check data-testid="Check" />
+                        <Check />
                       </div>
                       <div
                         className="bg-[#202227] hover:bg-[#2a2d33] p-2 rounded-full cursor-pointer transition-all"
@@ -77,7 +77,7 @@ export default function FriendsList({
                           changeFriendshipStatus("DELETE", friendship.id)
                         }
                       >
-                        <X data-testid="X" />
+                        <X />
                       </div>
                     </div>
                   )}

@@ -18,7 +18,7 @@ export default function FriendsPage() {
   const params = ["ONLINE", "", "PENDING", "BLOCKED"];
 
   const handleAddFriend = async (formData: FormData) => {
-    const res = await addFriend(user?.id as string, formData);
+    const res = await addFriend(formData);
     if (res?.id) {
       console.log("YEY");
     }

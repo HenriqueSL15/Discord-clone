@@ -19,7 +19,7 @@ export function ActivityTracker({ userId }: { userId: string }) {
       setUser({ ...user, onlineStatus: status });
     }
 
-    await updateOnlineStatus(userId, status);
+    await updateOnlineStatus(status);
   };
 
   const resetTimer = () => {

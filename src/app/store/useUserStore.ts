@@ -22,6 +22,12 @@ interface UserState {
 
   modal: string | null;
   setModal: (modal: string) => void;
+
+  activeRoom: string;
+  setActiveRoom: (room: string) => void;
+
+  voiceChatToken: string;
+  setVoiceChatToken: (token: string) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -39,11 +45,17 @@ export const useUserStore = create<UserState>()(
               : updater,
         })),
 
-      page: "",
+      page: "friends",
       setPage: (page: string) => set({ page }),
 
       modal: null as string | null,
       setModal: (modal: string) => set({ modal }),
+
+      activeRoom: "",
+      setActiveRoom: (room: string) => set({ activeRoom: room }),
+
+      voiceChatToken: "",
+      setVoiceChatToken: (token: string) => set({ voiceChatToken: token }),
     }),
     {
       name: "user-storage",

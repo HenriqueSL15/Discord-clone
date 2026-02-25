@@ -1,7 +1,9 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUserStore } from "../../store/useUserStore";
 import { FriendshipWithUsers } from "../../types/Friendship";
+import UserInterface from "@/app/types/User";
+import { getOtherUserInfo } from "@/app/actions/auth";
 export default function FriendsList({
   friendships,
 }: {
@@ -21,9 +23,76 @@ export default function FriendsList({
   const validFriendships = friendships?.filter(
     (f) => f.status != "PENDING" && f.status != "BLOCKED",
   );
+  const activeRoom = useUserStore((state) => state.activeRoom);
+  const setActiveRoom = useUserStore((state) => state.setActiveRoom);
+  const setVoiceChatToken = useUserStore((state) => state.setVoiceChatToken);
+  const voiceChatToken = useUserStore((state) => state.voiceChatToken);
+
+  const [otherUser, setOtherUser] = useState<UserInterface | null>(null);
+
+  const startPrivateChat = async (targetUserId: string) => {
+    const myId = user?.id;
+    const roomId = [myId, targetUserId].sort().join("---");
+
+    if (!myId) {
+      return "Não existe usuário ou sala";
+    }
+
+    const response = await fetch(
+      `/api/get-participant-token?room=${roomId}&username=${myId}`,
+    );
+    const data = await response.json();
+
+    setVoiceChatToken(data.token);
+  };
+
+  useEffect(() => {
+    if (activeRoom && !voiceChatToken) {
+      const otherUserId = activeRoom
+        .split("---")
+        .filter((id) => id != user?.id);
+      const fetchOtherUserInfo = async (id: string) => {
+        console.log(id);
+        const info = await getOtherUserInfo(id);
+        console.log(info);
+        if (info) setOtherUser(info);
+      };
+
+      if (otherUserId[0]) fetchOtherUserInfo(otherUserId[0]);
+    }
+  }, [activeRoom, voiceChatToken, user?.id]);
 
   return (
     <div className="w-full flex-1 p-3">
+      {activeRoom && !voiceChatToken && (
+        <div className="absolute w-full h-full bg-black/40 left-0 top-0 z-50 flex items-center justify-center">
+          <div className="w-1/3 h-1/3 bg-zinc-800 rounded-lg flex items-center justify-center flex-col gap-3">
+            <h1 className="text-3xl font-bold text-white">
+              {otherUser?.username} está te chamando!
+            </h1>
+            <div className="flex gap-3 w-full justify-center">
+              <button
+                className="w-1/3 h-15 rounded-lg bg-zinc-800 flex items-center justify-center p-2 hover:bg-emerald-600 transition-all cursor-pointer text-zinc-200 font-semibold"
+                onClick={() => {
+                  startPrivateChat(otherUser?.id as string);
+                  updatePage(otherUser?.id as string);
+                }}
+              >
+                Aceitar
+              </button>
+              <button
+                className="w-1/3 h-15 rounded-lg bg-zinc-800 flex items-center justify-center p-2 hover:bg-red-600 transition-all cursor-pointer text-zinc-200 font-semibold"
+                onClick={() => {
+                  setActiveRoom("");
+                }}
+              >
+                Negar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-[#6f7c8c] font-bold text-lg">MENSAGENS DIRETAS</h1>
       <div className="w-full flex-1 flex flex-col mt-3 gap-2">
         {validFriendships?.map((friendship: FriendshipWithUsers, i: number) => {

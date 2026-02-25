@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { use, useEffect } from "react";
 import { pusherClient } from "../lib/pusher-client";
 import { useUserStore } from "../store/useUserStore";
 import { FriendshipWithUsers } from "../types/Friendship";
@@ -10,14 +10,22 @@ export function PusherListener({ userId }: { userId: string }) {
   const setUser = useUserStore((state) => state.setUser);
   const setFriendships = useUserStore((state) => state.setFriendships);
 
+  const setActiveRoom = useUserStore((state) => state.setActiveRoom);
+  const setVoiceChatToken = useUserStore((state) => state.setVoiceChatToken);
+
   useEffect(() => {
-    const channel = pusherClient.subscribe(`private-user-${userId}`);
+    const channelName = `user-${userId}`;
+    console.log("Tentando se inscrever no canal:", channelName);
+    const channel = pusherClient.subscribe(channelName);
+
+    channel.bind("pusher:subscription_succeeded", () => {
+      console.log("Inscrição confirmada no canal:", channelName);
+    });
 
     channel.bind(
       "friend-status-changed",
       (data: { userId: string; status: "ONLINE" | "OFFLINE" | "ABSENT" }) => {
         setFriendships((prev: FriendshipWithUsers[] | null) => {
-          console.log("aaaaaaaaaaaaaaaaaaaaa");
           if (!prev) return null;
 
           return prev.map((f) => {
@@ -53,11 +61,32 @@ export function PusherListener({ userId }: { userId: string }) {
       },
     );
 
+    channel.bind("call-incoming", (data: { senderId: string }) => {
+      console.log("RECEBI A NOVA MENSAGEM DE CALL");
+      const startPrivateChat = async (targetUserId: string) => {
+        const myId = user?.id;
+        const roomId = [myId, targetUserId].sort().join("---");
+
+        if (!myId) {
+          return "Não existe usuário ou sala";
+        }
+
+        setActiveRoom(roomId);
+      };
+
+      startPrivateChat(data.senderId);
+    });
+
+    channel.bind("call-ended", () => {
+      setVoiceChatToken("");
+      setActiveRoom("");
+    });
+
     return () => {
       channel.unbind_all();
-      pusherClient.unsubscribe(`private-user-${userId}`);
+      pusherClient.unsubscribe(channelName);
     };
-  }, [userId, setFriendships, setUser]);
+  }, [userId, setFriendships, setUser, setActiveRoom, user]);
 
   return null;
 }

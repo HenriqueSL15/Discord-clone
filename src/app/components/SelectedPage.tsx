@@ -6,9 +6,9 @@ import PrivateChat from "./PrivateChat";
 export default function SelectedPage() {
   const page = useUserStore((state) => state.page);
 
-  return page == "friends" ? (
-    <FriendsPage />
-  ) : (
-    <PrivateChat otherUserId={page} />
-  );
+  if (!page || page === "friends") {
+    return <FriendsPage />;
+  }
+
+  return <PrivateChat otherUserId={page} />;
 }

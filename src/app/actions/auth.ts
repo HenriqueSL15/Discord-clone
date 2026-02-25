@@ -227,6 +227,8 @@ export async function getOtherUserInfo(
     },
   });
 
+  console.log(userData);
+
   if (!userData) return null;
 
   const { password, ...userWithoutPassword } = userData;

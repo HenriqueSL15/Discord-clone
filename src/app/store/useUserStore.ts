@@ -28,6 +28,9 @@ interface UserState {
 
   voiceChatToken: string;
   setVoiceChatToken: (token: string) => void;
+
+  isMuted: boolean;
+  setIsMuted: (isMuted: boolean) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -56,6 +59,9 @@ export const useUserStore = create<UserState>()(
 
       voiceChatToken: "",
       setVoiceChatToken: (token: string) => set({ voiceChatToken: token }),
+
+      isMuted: false,
+      setIsMuted: (isMuted: boolean) => set({isMuted})
     }),
     {
       name: "user-storage",

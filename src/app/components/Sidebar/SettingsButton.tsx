@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useUserStore } from "../store/useUserStore";
+import { useUserStore } from "../../store/useUserStore";
 import { useFloating, offset, flip, shift } from "@floating-ui/react";
-import { logoff } from "../actions/auth";
+import { logoff } from "../../actions/auth";
+import { Settings } from "lucide-react";
 
-export default function IconButton({ icon, action }) {
-  const FirstIcon = icon?.[0];
-  const SecondIcon = icon?.[1] ? icon[1] : icon[0];
+export default function SettingsButton() {
   const setModal = useUserStore((state) => state.setModal);
+
   const [clicked, setClicked] = useState(false);
   const { x, y, refs, strategy } = useFloating({
     placement: "bottom",
@@ -21,23 +21,14 @@ export default function IconButton({ icon, action }) {
         ref={refs.setReference}
         onClick={() => {
           setClicked((prev) => !prev);
-          if (action == "userSettings") {
-            setModal("settings");
-          }
+
+          setModal("settings");
         }}
         className="relative rounded-lg transition-all h-2/3 flex items-center justify-center hover:bg-white/10 p-3 cursor-pointer"
       >
-        {action != "userSettings" ? (
-          !clicked ? (
-            <FirstIcon />
-          ) : (
-            <SecondIcon color="red" />
-          )
-        ) : (
-          <FirstIcon />
-        )}
+        <Settings />
       </button>
-      {clicked && action == "userSettings" && (
+      {clicked && (
         <div
           ref={refs.setFloating}
           className="w-20 h-20 bg-[#1b1c22] flex items-center justify-center rounded-lg p-5"

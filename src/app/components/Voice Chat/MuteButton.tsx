@@ -1,18 +1,24 @@
 import { useLocalParticipant } from "@livekit/components-react";
-import { useState } from "react";
 import { Mic, MicOff } from "lucide-react";
+import { useUserStore } from "@/app/store/useUserStore";
+import { useEffect } from "react";
 
 export default function MuteButton() {
+  const isMuted = useUserStore((state) => state.isMuted);
+  const setIsMuted = useUserStore((state) => state.setIsMuted);
   const { localParticipant } = useLocalParticipant();
 
-  const [isMuted, setIsMuted] = useState(false);
-
   const toggleMute = async () => {
-    console.log("vai funcionar");
     const enabled = !isMuted;
     await localParticipant?.setMicrophoneEnabled(!enabled);
     setIsMuted(enabled);
   };
+
+  useEffect(() => {
+    if (localParticipant) {
+      localParticipant.setMicrophoneEnabled(!isMuted);
+    }
+  }, [isMuted]);
 
   return (
     <button

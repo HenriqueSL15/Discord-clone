@@ -1,21 +1,28 @@
+import { getUserInfo } from "@/app/actions/auth";
 import { AccessToken } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const room = req.nextUrl.searchParams.get("room");
-  const username = req.nextUrl.searchParams.get("username");
+  const userId = req.nextUrl.searchParams.get("username");
 
-  if (!room || !username) {
+  if (!room || !userId) {
     return NextResponse.json(
       { error: 'Missing "room" or "username" query parameter' },
       { status: 400 },
     );
   }
 
+  const user = await getUserInfo();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const at = new AccessToken(
     process.env.LIVEKIT_API_KEY,
     process.env.LIVEKIT_API_SECRET,
-    { identity: username },
+    { identity: user.username },
   );
 
   at.addGrant({

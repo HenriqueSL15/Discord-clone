@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 import { pusherClient } from "../lib/pusher-client";
 import { useUserStore } from "../store/useUserStore";
 import { FriendshipWithUsers } from "../types/Friendship";

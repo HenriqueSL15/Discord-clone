@@ -1,7 +1,7 @@
 "use client";
 import { LiveKitRoom } from "@livekit/components-react";
 import AudioChatInterface from "./AudioChatInterface";
-import { useUserStore } from "../store/useUserStore";
+import { useUserStore } from "@/app/store/useUserStore";
 
 export default function AudioChat() {
   const voiceChatToken = useUserStore((state) => state.voiceChatToken);
@@ -14,8 +14,10 @@ export default function AudioChat() {
       audio={true}
       video={false}
     >
-      <div className="flex flex-col items-center gap-4 p-8 border rounded-lg">
-        <h2 className="text-xl font-bold">Chamada começou</h2>
+      <div className="flex flex-col items-center gap-4 p-8 rounded-lg">
+        <h2 className="font-bold text-zinc-200 text-4xl">
+          Chamada em andamento
+        </h2>
         <AudioChatInterface />
       </div>
     </LiveKitRoom>

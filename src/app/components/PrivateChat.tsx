@@ -9,7 +9,7 @@ import EditingMessageBox from "./EditingMessageBox";
 import MessageInput from "./MessageInput";
 import { usePrivateChat } from "../hooks/usePrivateChat";
 import TopBar from "./TopBar";
-import AudioChat from "./AudioChat";
+import AudioChat from "./Voice Chat/AudioChat";
 import { triggerVoiceCall } from "../actions/voice";
 
 export default function PrivateChat({ otherUserId }: { otherUserId: string }) {
@@ -250,9 +250,6 @@ export default function PrivateChat({ otherUserId }: { otherUserId: string }) {
         activeRoom &&
         voiceChatToken && (
           <div className="w-full flex flex-col items-center justify-center flex-1 gap-10">
-            <h1 className="text-4xl text-zinc-200">
-              {user?.username} / {otherUser?.username}
-            </h1>
             <div className="flex justify-center items-center gap-5">
               <AudioChat />
             </div>

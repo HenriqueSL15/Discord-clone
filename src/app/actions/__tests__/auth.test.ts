@@ -149,12 +149,9 @@ describe("Auth Actions Complete Suite", () => {
       formData.append("username", "existing");
       formData.append("password", "pass123");
 
-      vi.mocked(prisma.user.create).mockRejectedValue(
-        new Error("Unique constraint failed") as never,
-      );
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "existing" } as any);
 
-      const result = await register(formData);
-      expect(result).toEqual({ error: "E-mail ou Usuário já existe" });
+      await expect(register(formData)).rejects.toThrow("Já existe um usuário com esse email");
     });
   });
 
@@ -224,8 +221,7 @@ describe("Auth Actions Complete Suite", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
       vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
 
-      const result = await login(formData);
-      expect(result).toEqual({ error: "E-mail ou Senha errados" });
+      await expect(login(formData)).rejects.toThrow("A senha não está correta");
     });
   });
 
@@ -331,10 +327,10 @@ describe("Auth Actions Complete Suite", () => {
   });
 
   describe("logoff", () => {
-    it("should delete session cookie and redirect to login", async () => {
-      await logoff();
+    it("should delete session cookie and return success object", async () => {
+      const result = await logoff();
       expect(mockCookieStore.delete).toHaveBeenCalledWith("session");
-      expect(redirect).toHaveBeenCalledWith("/login");
+      expect(result).toEqual({ success: true });
     });
   });
 

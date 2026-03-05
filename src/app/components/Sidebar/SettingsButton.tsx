@@ -5,6 +5,8 @@ import { useUserStore } from "../../store/useUserStore";
 import { useFloating, offset, flip, shift } from "@floating-ui/react";
 import { logoff } from "../../actions/auth";
 import { Settings } from "lucide-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function SettingsButton() {
   const setModal = useUserStore((state) => state.setModal);
@@ -14,6 +16,8 @@ export default function SettingsButton() {
     placement: "bottom",
     middleware: [offset(10), flip(), shift()],
   });
+
+  const router = useRouter();
 
   return (
     <>
@@ -42,7 +46,20 @@ export default function SettingsButton() {
           <ul>
             <li
               className="hover:bg-[#62667a]/50 cursor-pointer rounded-lg p-1 transition-all"
-              onClick={async () => await logoff()}
+              onClick={async () => {
+                const res = logoff();
+
+                toast.promise(res, {
+                  loading: "Deslogando...",
+                  success: () => {
+                    router.push("/login");
+                    return "Deslogado";
+                  },
+                  error: (error) => {
+                    return `${error.message}`;
+                  },
+                });
+              }}
             >
               Deslogar
             </li>

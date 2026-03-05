@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { register } from "@/app/actions/auth";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [isHidden, setIsHidden] = useState(true);
@@ -19,7 +20,17 @@ export default function RegisterPage() {
         </div>
         <form
           action={async (formData) => {
-            await register(formData);
+            const res = register(formData);
+
+            toast.promise(res, {
+              loading: "Logando...",
+              success: (result) => {
+                return "Sucesso ao se registrar!";
+              },
+              error: (error) => {
+                return `${error.message}`;
+              },
+            });
           }}
           className="text-start w-[80%] flex flex-col gap-3"
         >

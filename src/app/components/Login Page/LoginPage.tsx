@@ -4,6 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { login } from "@/app/actions/auth";
 import { useUserStore } from "../../store/useUserStore";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [isHidden, setIsHidden] = useState(true);
@@ -24,14 +25,19 @@ export default function LoginPage() {
         </div>
         <form
           action={async (formData) => {
-            const res = await login(formData);
+            const res = login(formData);
 
-            if ("error" in res) {
-              console.log("HOUVE UM ERRO NO LOGIN");
-            } else {
-              updateUser(res);
-              router.push("/");
-            }
+            toast.promise(res, {
+              loading: "Logando...",
+              success: (result) => {
+                updateUser(result);
+                router.push("/");
+                return "Sucesso ao logar!";
+              },
+              error: (error) => {
+                return `${error.message}`;
+              },
+            });
           }}
           className="text-start w-[80%] flex flex-col gap-3"
         >

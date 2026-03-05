@@ -22,7 +22,7 @@ cloudinary.config({
 /**
  * Registra um novo usuário, faz o hash da senha, cria um cookie de sessão e redireciona para a página principal.
  * @param {FormData} formData - Os dados do formulário de registro, contendo email, nome de usuário e senha.
- * @returns {Promise<void | { error: string }>} Redireciona em caso de sucesso ou retorna um objeto de erro se o e-mail/usuário já existir.
+ * @returns {Promise<void>} Redireciona em caso de sucesso ou retorna um objeto de erro se o e-mail/usuário já existir.
  * @example
  * const formData = new FormData();
  * formData.append('email', 'test@example.com');
@@ -38,6 +38,22 @@ export async function register(formData: FormData) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
+    const emailExists = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (emailExists) throw new Error("Já existe um usuário com esse email");
+
+    const userExists = await prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+
+    if (userExists) throw new Error("Já existe um usuário com esse username");
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -51,8 +67,8 @@ export async function register(formData: FormData) {
 
     const cookieStore = await cookies();
     cookieStore.set("session", session, { expires, httpOnly: true });
-  } catch (err) {
-    return { error: "E-mail ou Usuário já existe" };
+  } catch (err: any) {
+    throw new Error(err.message);
   }
 
   redirect("/");
@@ -93,6 +109,8 @@ export async function addFriend(formData: FormData) {
       },
     });
 
+    if (!receiverUser) throw new Error("Não existe usuário com esse username");
+
     const friendship = await prisma.friendship.create({
       data: {
         receiverId: receiverUser?.id ? receiverUser.id : "",
@@ -101,24 +119,22 @@ export async function addFriend(formData: FormData) {
     });
 
     return friendship;
-  } catch (err) {
-    console.log("Erro ao criar amizade", err);
+  } catch (err: any) {
+    throw new Error(err.message);
   }
 }
 
 /**
  * Realiza o login de um usuário, verifica as credenciais, cria um cookie de sessão, atualiza seu status online e retorna as informações do usuário.
  * @param {FormData} formData - Dados do formulário de login, contendo email and password.
- * @returns {Promise<UserInterface | { error: string }>} Retorna o objeto do usuário em caso de sucesso ou um objeto de erro em caso de falha.
+ * @returns {Promise<UserInterface>} Retorna o objeto do usuário em caso de sucesso ou um objeto de erro em caso de falha.
  * @example
  * const formData = new FormData();
  * formData.append('email', 'user@example.com');
  * formData.append('password', 'password123');
  * const user = await login(formData);
  */
-export async function login(
-  formData: FormData,
-): Promise<UserInterface | { error: string }> {
+export async function login(formData: FormData): Promise<UserInterface> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -130,12 +146,12 @@ export async function login(
     });
 
     if (!user) {
-      throw new Error();
+      throw new Error("Não existe usuário com esse email");
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      throw new Error();
+      throw new Error("A senha não está correta");
     }
 
     const expires = new Date(Date.now() + 2 * 60 * 60 * 1000);
@@ -153,30 +169,34 @@ export async function login(
         onlineStatus: "ONLINE",
       },
     });
-  } catch (err) {
-    return { error: "E-mail ou Senha errados" };
-  }
-  const res = await getUserInfo();
-  if (!res) {
-    return { error: "Não foi possível obter as informações do usuário" };
-  }
 
-  return res;
+    const res = await getUserInfo();
+    if (!res) {
+      throw new Error("Não foi possível obter as informações do usuário");
+    }
+
+    return res;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
 }
 
 /**
  * Realiza o logoff do usuário atual, atualiza seu status online para "OFFLINE", exclui o cookie de sessão e redireciona para a página de login.
- * @returns {Promise<void>} Redireciona o usuário para a página de login.
+ * @returns {Promise<boolean>} Redireciona o usuário para a página de login.
  * @example
  * await logoff();
  */
 export async function logoff() {
-  await updateOnlineStatus("OFFLINE");
+  try {
+    await updateOnlineStatus("OFFLINE");
 
-  const cookieStore = await cookies();
-  cookieStore.delete("session");
-
-  redirect("/login");
+    const cookieStore = await cookies();
+    cookieStore.delete("session");
+    return { success: true };
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
 }
 
 /**

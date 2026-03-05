@@ -7,6 +7,7 @@ import AddFriendPage from "./AddFriendPage";
 import { addFriend } from "../../actions/auth";
 import { useUserStore } from "../../store/useUserStore";
 import { FriendshipWithUsers } from "../../types/Friendship";
+import { toast } from "sonner";
 
 export default function FriendsPage() {
   const [selectedOption, setSelectedOption] = useState(0);
@@ -18,10 +19,15 @@ export default function FriendsPage() {
   const params = ["ONLINE", "", "PENDING", "BLOCKED"];
 
   const handleAddFriend = async (formData: FormData) => {
-    const res = await addFriend(formData);
-    if (res?.id) {
-      console.log("YEY");
-    }
+    const res = addFriend(formData);
+
+    toast.promise(res, {
+      loading: "Enviando solicitação...",
+      success: "Solicitação enviada!",
+      error: (error) => {
+        return error.message;
+      },
+    });
   };
 
   if (!friendships) {
@@ -42,7 +48,7 @@ export default function FriendsPage() {
       } else {
         return friendship.status != "PENDING" && friendship.status != "BLOCKED";
       }
-    }
+    },
   );
 
   return (

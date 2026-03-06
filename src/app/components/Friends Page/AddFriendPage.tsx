@@ -17,17 +17,17 @@ export default function AddFriendPage({
           Você pode adicionar amigos com o nome de usuário deles.
         </h2>
       </div>
-      <form action={handleAddFriend} className="flex gap-3">
+      <form action={handleAddFriend} className="flex flex-col md:flex-row gap-3">
         <input
           type="text"
           name="searchInput"
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
-          className="bg-[#121317] px-3 py-2 rounded-lg text-[#5c7ca0] font-semibold w-1/2 outline-none"
+          className="bg-[#121317] px-3 py-2 rounded-lg text-[#5c7ca0] font-semibold w-full md:w-1/2 outline-none"
         />
         <button
           type="submit"
-          className="bg-linear-to-r from-[#5b64f2] to-[#7b4aeb] w-1/4 font-semibold h-5/10 p-3 mb-1 rounded-md hover:brightness-120 hover:cursor-pointer transition-all text-white"
+          className="bg-linear-to-r from-[#5b64f2] to-[#7b4aeb] w-full md:w-1/4 font-semibold h-12 p-3 rounded-md hover:brightness-120 hover:cursor-pointer transition-all text-white"
         >
           Mandar Solicitação de Amizade
         </button>

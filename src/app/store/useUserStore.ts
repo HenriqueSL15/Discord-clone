@@ -31,6 +31,9 @@ interface UserState {
 
   isMuted: boolean;
   setIsMuted: (isMuted: boolean) => void;
+
+  isSidebarOpen: boolean;
+  setSidebarOpen: (isOpen: boolean) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -61,7 +64,10 @@ export const useUserStore = create<UserState>()(
       setVoiceChatToken: (token: string) => set({ voiceChatToken: token }),
 
       isMuted: false,
-      setIsMuted: (isMuted: boolean) => set({isMuted})
+      setIsMuted: (isMuted: boolean) => set({isMuted}),
+
+      isSidebarOpen: false,
+      setSidebarOpen: (isSidebarOpen: boolean) => set({ isSidebarOpen })
     }),
     {
       name: "user-storage",

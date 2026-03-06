@@ -25,7 +25,7 @@ export default function Message({
   return (
     <h1 className="text-[#c2c2c5] text-lg relative">
       {message.images.length > 0 && (
-        <div className="flex gap-3 max-w-1/5">
+        <div className="flex gap-3 max-w-1/2 sm:max-w-1/3 md:max-w-1/4 lg:max-w-1/5">
           {message.images.map((image, i) => {
             return (
               <Image

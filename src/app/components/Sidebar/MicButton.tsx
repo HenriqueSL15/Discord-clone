@@ -15,11 +15,7 @@ export default function SettingsButton() {
         }}
         className="relative rounded-lg transition-all h-2/3 flex items-center justify-center hover:bg-white/10 p-3 cursor-pointer"
       >
-        {!isMuted ? (
-          <Mic className="h-full w-full" />
-        ) : (
-          <MicOff className="h-full w-full text-red-500" />
-        )}
+        {!isMuted ? <Mic /> : <MicOff className="text-red-500" />}
       </button>
     </>
   );

@@ -1,5 +1,5 @@
 "use client";
-import { Users } from "lucide-react";
+import { Users, Menu } from "lucide-react";
 import FriendsPageButton from "./FriendsPageButton";
 import { useState } from "react";
 import SearchInput from "./FriendsList";
@@ -14,6 +14,7 @@ export default function FriendsPage() {
   const user = useUserStore((state) => state.user);
   let friendships = useUserStore((state) => state.friendships);
   const [search, setSearch] = useState("");
+  const setSidebarOpen = useUserStore((state) => state.setSidebarOpen);
 
   const texts = ["Online", "Todos", "Pendente", "Bloqueado"];
   const params = ["ONLINE", "", "PENDING", "BLOCKED"];
@@ -52,17 +53,21 @@ export default function FriendsPage() {
   );
 
   return (
-    <div className="w-4/5 bg-[#1b1c22] h-screen">
-      <div className="w-full h-13 border-b border-[#272a32] p-3 flex gap-5">
+    <div className="w-full bg-[#1b1c22] h-screen">
+      <div className="w-full h-13 border-b border-[#272a32] p-3 flex gap-5 items-center">
+        <Menu
+          className="md:hidden text-zinc-300 cursor-pointer"
+          onClick={() => setSidebarOpen(true)}
+        />
         <h1
-          className={`flex gap-3 w-32 text-xl items-center justify-start border-r border-[#272a32]`}
+          className={`flex gap-3 w-32 text-xl items-center justify-start md:border-r border-[#272a32]`}
         >
           <Users color="#7588a3" />
-          <span className="text-white font-semibold cursor-default">
+          <span className="text-white font-semibold cursor-default hidden md:inline">
             Amigos
           </span>
         </h1>
-        <div className="flex gap-3">
+        <div className="flex gap-3 overflow-x-auto no-scrollbar">
           {Array.from({ length: 4 }).map((_, i) => {
             return (
               <FriendsPageButton

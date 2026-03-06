@@ -62,7 +62,6 @@ export function PusherListener({ userId }: { userId: string }) {
     );
 
     channel.bind("call-incoming", (data: { senderId: string }) => {
-      console.log("RECEBI A NOVA MENSAGEM DE CALL");
       const startPrivateChat = async (targetUserId: string) => {
         const myId = user?.id;
         const roomId = [myId, targetUserId].sort().join("---");

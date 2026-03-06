@@ -11,8 +11,8 @@ export default function RegisterPage() {
   const router = useRouter();
 
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-linear-to-br from-[#202442] to-[#121317]">
-      <div className="bg-[#16181d] min-h-1/2 min-w-3/10 shadow-xl rounded-lg flex flex-col items-center text-center">
+    <div className="w-full h-screen flex justify-center items-center bg-linear-to-br from-[#202442] to-[#121317] p-4">
+      <div className="bg-[#16181d] min-h-1/2 w-full max-w-md md:min-w-3/10 shadow-xl rounded-lg flex flex-col items-center text-center">
         <h1 className="m-8 font-bold text-white text-xl">Discord Clone</h1>
         <div className="mb-3 flex flex-col">
           <h1 className="text-white font-bold text-2xl">Cria uma conta!</h1>

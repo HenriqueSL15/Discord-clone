@@ -74,7 +74,7 @@ export default function PrivateChat({ otherUserId }: { otherUserId: string }) {
   }, [activeRoom]);
 
   return (
-    <div className="bg-[#1b1c22] w-4/5 flex flex-col justify-end h-screen">
+    <div className="bg-[#1b1c22] w-full flex flex-col justify-end h-screen">
       {!activeRoom && voiceChatToken ? (
         <div className="h-1/15 w-full flex items-center justify-between px-5 border-b border-zinc-700 bg-indigo-600/20">
           <h1 className="text-xl font-bold text-white">

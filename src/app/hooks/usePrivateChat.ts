@@ -206,7 +206,9 @@ export function usePrivateChat(otherUserId: string) {
       setPreviewImage(tempPreviewImages);
       setInputValue(inputVal);
     } else {
-      setMessages((prev) => prev.filter((m) => m.id != "temporary"));
+      setMessages((prev) =>
+        prev.map((m) => (m.id === "temporary" ? (res as MessageWithUsers) : m)),
+      );
       setInputValue("");
     }
   };

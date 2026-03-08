@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { register } from "@/app/actions/auth";
+
 import { toast } from "sonner";
 
 export default function RegisterPage() {
@@ -27,6 +28,7 @@ export default function RegisterPage() {
             toast.promise(res, {
               loading: "Logando...",
               success: (result) => {
+                router.push("/");
                 return "Sucesso ao se registrar!";
               },
               error: (error) => {

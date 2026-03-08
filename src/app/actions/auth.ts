@@ -70,8 +70,6 @@ export async function register(formData: FormData) {
   } catch (err: any) {
     throw new Error(err.message);
   }
-
-  redirect("/");
 }
 
 /**
@@ -116,7 +114,37 @@ export async function addFriend(formData: FormData) {
         receiverId: receiverUser?.id ? receiverUser.id : "",
         senderId,
       },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            createdAt: true,
+            onlineStatus: true,
+            lastOnline: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            createdAt: true,
+            onlineStatus: true,
+            lastOnline: true,
+          },
+        },
+      },
     });
+
+    if (friendship) {
+      await pusherServer.trigger(
+        `user-${receiverUser.id}`,
+        "friend-request-received",
+        friendship,
+      );
+    }
 
     return friendship;
   } catch (err: any) {
@@ -540,6 +568,18 @@ export async function changeFriendshipStatus(
         },
       });
 
+      if (deletedFriendship) {
+        const otherUserId =
+          deletedFriendship.senderId === userId
+            ? deletedFriendship.receiverId
+            : deletedFriendship.senderId;
+
+        await pusherServer.trigger(`user-${otherUserId}`, "friendship-updated", {
+          action: "DELETE",
+          friendship: deletedFriendship,
+        });
+      }
+
       return deletedFriendship;
     }
 
@@ -579,6 +619,18 @@ export async function changeFriendshipStatus(
         status: val,
       },
     });
+
+    if (updatedFriendship) {
+      const otherUserId =
+        updatedFriendship.senderId === userId
+          ? updatedFriendship.receiverId
+          : updatedFriendship.senderId;
+
+      await pusherServer.trigger(`user-${otherUserId}`, "friendship-updated", {
+        action: val,
+        friendship: updatedFriendship,
+      });
+    }
 
     return updatedFriendship;
   } catch (err) {
@@ -658,7 +710,7 @@ export async function _updateUserStatus(
     const notifications = friendships.map((f) => {
       const targetId = f.receiverId == userId ? f.senderId : f.receiverId;
       return pusherServer.trigger(
-        `private-user-${targetId}`,
+        `user-${targetId}`,
         "friend-status-changed",
         {
           userId,
@@ -667,7 +719,7 @@ export async function _updateUserStatus(
       );
     });
 
-    await pusherServer.trigger(`private-user-${userId}`, "own-status-changed", {
+    await pusherServer.trigger(`user-${userId}`, "own-status-changed", {
       status,
     });
 

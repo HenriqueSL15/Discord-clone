@@ -19,12 +19,22 @@ export default function FriendsPage() {
   const texts = ["Online", "Todos", "Pendente", "Bloqueado"];
   const params = ["ONLINE", "", "PENDING", "BLOCKED"];
 
+  const setFriendships = useUserStore((state) => state.setFriendships);
+
   const handleAddFriend = async (formData: FormData) => {
     const res = addFriend(formData);
 
     toast.promise(res, {
       loading: "Enviando solicitação...",
-      success: "Solicitação enviada!",
+      success: (result) => {
+        if (result) {
+          setFriendships((prev: FriendshipWithUsers[] | null) => {
+            if (!prev) return [result as any];
+            return [...prev, result as any];
+          });
+        }
+        return "Solicitação enviada!";
+      },
       error: (error) => {
         return error.message;
       },

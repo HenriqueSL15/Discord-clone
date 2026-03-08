@@ -12,6 +12,24 @@ export default function FriendsList({
 }) {
   const [search, setSearch] = useState("");
   const user = useUserStore((state) => state.user);
+  const setFriendships = useUserStore((state) => state.setFriendships);
+
+  const handleUpdateFriendship = async (
+    val: "ACCEPTED" | "DELETE",
+    friendshipId: string,
+  ) => {
+    const res = await changeFriendshipStatus(val, friendshipId);
+
+    if (res) {
+      setFriendships((prev: FriendshipWithUsers[] | null) => {
+        if (!prev) return null;
+        if (val === "DELETE") {
+          return prev.filter((f) => f.id !== friendshipId);
+        }
+        return prev.map((f) => (f.id === friendshipId ? res : f));
+      });
+    }
+  };
 
   const validFriendships = filteredFriendships?.filter((f) => {
     if (user?.id == f.senderId) {
@@ -65,7 +83,7 @@ export default function FriendsList({
                       <div
                         className="bg-[#202227] hover:bg-[#2a2d33] p-2 rounded-full cursor-pointer transition-all"
                         onClick={() =>
-                          changeFriendshipStatus("ACCEPTED", friendship.id)
+                          handleUpdateFriendship("ACCEPTED", friendship.id)
                         }
                       >
                         {" "}
@@ -74,7 +92,7 @@ export default function FriendsList({
                       <div
                         className="bg-[#202227] hover:bg-[#2a2d33] p-2 rounded-full cursor-pointer transition-all"
                         onClick={() =>
-                          changeFriendshipStatus("DELETE", friendship.id)
+                          handleUpdateFriendship("DELETE", friendship.id)
                         }
                       >
                         <X data-testid="X" />

@@ -17,6 +17,13 @@ export default function MainContainer({
   const isSidebarOpen = useUserStore((state) => state.isSidebarOpen);
   const setSidebarOpen = useUserStore((state) => state.setSidebarOpen);
   const activeRoom = useUserStore((state) => state.activeRoom);
+  const setFriendships = useUserStore((state) => state.setFriendships);
+
+  useEffect(() => {
+    if (friendships) {
+      setFriendships(friendships);
+    }
+  }, [friendships, setFriendships]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -34,7 +41,7 @@ export default function MainContainer({
         }`}
       >
         <FriendsButton />
-        <FriendsList friendships={friendships} />
+        <FriendsList />
         <UserInfo />
       </div>
 

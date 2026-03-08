@@ -81,6 +81,31 @@ export function PusherListener({ userId }: { userId: string }) {
       setActiveRoom("");
     });
 
+    channel.bind("friend-request-received", (data: FriendshipWithUsers) => {
+      setFriendships((prev: FriendshipWithUsers[] | null) => {
+        if (!prev) return [data];
+        if (prev.find((f) => f.id === data.id)) return prev;
+        return [...prev, data];
+      });
+    });
+
+    channel.bind(
+      "friendship-updated",
+      (data: { action: string; friendship: FriendshipWithUsers }) => {
+        setFriendships((prev: FriendshipWithUsers[] | null) => {
+          if (!prev) return null;
+
+          if (data.action === "DELETE") {
+            return prev.filter((f) => f.id !== data.friendship.id);
+          }
+
+          return prev.map((f) =>
+            f.id === data.friendship.id ? data.friendship : f,
+          );
+        });
+      },
+    );
+
     return () => {
       channel.unbind_all();
       pusherClient.unsubscribe(channelName);

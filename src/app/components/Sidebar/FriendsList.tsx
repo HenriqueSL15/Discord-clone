@@ -4,19 +4,9 @@ import { useUserStore } from "../../store/useUserStore";
 import { FriendshipWithUsers } from "../../types/Friendship";
 import UserInterface from "@/app/types/User";
 import { getOtherUserInfo } from "@/app/actions/auth";
-export default function FriendsList({
-  friendships,
-}: {
-  friendships: FriendshipWithUsers[] | null;
-}) {
+export default function FriendsList() {
   const user = useUserStore((state) => state.user);
-  const setFriendships = useUserStore((state) => state.setFriendships);
-
-  useEffect(() => {
-    if (friendships) {
-      setFriendships(friendships);
-    }
-  }, [friendships, setFriendships]);
+  const friendships = useUserStore((state) => state.friendships);
 
   const updatePage = useUserStore((state) => state.setPage);
   const page = useUserStore((state) => state.page);
@@ -52,9 +42,7 @@ export default function FriendsList({
         .split("---")
         .filter((id) => id != user?.id);
       const fetchOtherUserInfo = async (id: string) => {
-        console.log(id);
         const info = await getOtherUserInfo(id);
-        console.log(info);
         if (info) setOtherUser(info);
       };
 

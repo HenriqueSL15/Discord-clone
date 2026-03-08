@@ -6,11 +6,7 @@ export async function POST(req: Request) {
 
   for (const event of body.events) {
     if (event.name === "channel_vacated") {
-      const channelName = event.channel;
-
-      const userId = channelName.replace("private-user-", "");
-
-      await updateOnlineStatus(userId, "OFFLINE");
+      await updateOnlineStatus("OFFLINE");
     }
   }
 

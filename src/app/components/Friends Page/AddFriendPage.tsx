@@ -17,7 +17,14 @@ export default function AddFriendPage({
           Você pode adicionar amigos com o nome de usuário deles.
         </h2>
       </div>
-      <form action={handleAddFriend} className="flex flex-col md:flex-row gap-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          handleAddFriend(formData);
+        }}
+        className="flex flex-col md:flex-row gap-3"
+      >
         <input
           type="text"
           name="searchInput"

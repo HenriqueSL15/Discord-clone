@@ -19,7 +19,9 @@ export default function RegisterPage() {
           <h2 className="text-[#6a87a3] ">Junte-se a nós!</h2>
         </div>
         <form
-          action={async (formData) => {
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
             const res = register(formData);
 
             toast.promise(res, {

@@ -24,7 +24,9 @@ export default function LoginPage() {
           </h2>
         </div>
         <form
-          action={async (formData) => {
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
             const res = login(formData);
 
             toast.promise(res, {

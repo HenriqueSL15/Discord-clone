@@ -34,9 +34,10 @@ export default function EditingMessageBox({
         setNewMessage(message.message);
         editInputRef.current?.focus();
       }}
-      action={() =>
-        handleEditMessage(message.id, message.message, message.images)
-      }
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleEditMessage(message.id, message.message, message.images);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
           setNewImages(message.images);

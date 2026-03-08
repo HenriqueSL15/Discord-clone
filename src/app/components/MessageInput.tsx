@@ -27,7 +27,13 @@ export default function MessageInput({
   otherUser: UserInterface | null;
 }) {
   return (
-    <form className="flex p-4 gap-10" action={handleSendMessage}>
+    <form
+      className="flex p-4 gap-10"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSendMessage();
+      }}
+    >
       <div className="w-full  bg-[#21232b] flex flex-col gap-5 rounded-lg">
         {previewImage && previewImage.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 overflow-y-auto w-full max-h-60">

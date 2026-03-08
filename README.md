@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Discord Clone - Uma Plataforma de Comunicação em Tempo Real
 
-## Getting Started
+Este projeto foi desenvolvido para recriar a experiência principal do Discord, focando em comunicações privadas, sistema de amizades e interações por voz e texto em tempo real, proporcionando um ambiente dinâmico para conexões entre usuários.
 
-First, run the development server:
+## 🧪 Testes
+
+Este projeto utiliza um conjunto robusto de testes para garantir a integridade do código e a experiência do usuário, cobrindo testes unitários, de componentes e de interface.
+
+## 🚀 Tecnologias Utilizadas
+
+### Frontend
+
+- **Next.js (App Router)**: Framework React para renderização híbrida e rotas otimizadas.
+- **React 19**: Utilização das funcionalidades mais recentes da biblioteca.
+- **TailwindCSS 4**: Estilização moderna e utilitária para uma interface rápida e responsiva.
+- **Zustand**: Gerenciamento de estado global simples e performático.
+- **Lucide React**: Biblioteca de ícones elegantes para a interface.
+- **Sonner**: Sistema de notificações (toasts) leves e bonitos.
+- **Pusher JS**: Cliente para atualizações e chat em tempo real.
+- **Livekit Client**: Integração para chamadas de voz e vídeo de baixa latência.
+- **React Zoom Pan Pinch**: Funcionalidade de zoom e navegação em imagens.
+
+### Backend & Banco de Dados
+
+- **Prisma ORM**: Modelagem de dados e consultas seguras ao banco de dados PostgreSQL.
+- **PostgreSQL**: Banco de dados relacional para persistência de usuários, amizades e mensagens.
+- **Pusher SDK**: Gerenciamento de eventos em tempo real no servidor.
+- **Livekit Server SDK**: Controle e autenticação de salas de voz.
+- **Cloudinary**: Armazenamento e gerenciamento de imagens na nuvem.
+- **BcryptJS**: Criptografia de senhas para segurança dos usuários.
+- **Jose / JWT**: Autenticação e proteção de rotas via tokens.
+
+## ⚙️ Funcionalidades
+
+- **Autenticação Segura**: Cadastro e login de usuários com senhas criptografadas e tokens JWT.
+- **Sistema de Amizades**: Envio, aceitação e bloqueio de pedidos de amizade.
+- **Status Online em Tempo Real**: Visualização do estado atual dos amigos (Online, Ausente ou Offline).
+- **Chat Privado em Tempo Real**: Troca de mensagens instantâneas com suporte a texto e envio de imagens.
+- **Chamadas de Voz**: Comunicação por voz integrada utilizando a infraestrutura da Livekit.
+- **Visualização de Mídia**: Galeria de imagens com suporte a zoom e navegação.
+- **Rastreador de Atividade**: Monitoramento de presença e atividades dos usuários.
+- **Interface Responsiva**: Design adaptado para proporcionar uma excelente experiência em diversos dispositivos.
+- **Rotas Protegidas**: Garantia de que apenas usuários autenticados acessem as funcionalidades privadas.
+
+### Testes Unitários e de Componentes (Vitest)
+
+Para executar os testes com Vitest, utilize o seguinte comando:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Para visualizar a interface do Vitest:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run test:ui
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Testes End-to-End (Playwright)
 
-## Learn More
+O projeto também está configurado para testes E2E utilizando o Playwright (verifique os scripts em `package.json` para comandos adicionais).
 
-To learn more about Next.js, take a look at the following resources:
+**OBS:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Este projeto foi desenvolvido com fins educacionais e para demonstração de habilidades em desenvolvimento web fullstack utilizando as tecnologias mais modernas do ecossistema JavaScript/TypeScript.

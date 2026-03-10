@@ -90,15 +90,22 @@ export default function FriendsList() {
               : friendship.sender;
 
           const otherPersonStatus = otherPerson.onlineStatus.split("");
-          const formattedStatus = otherPersonStatus.map((val, i) => {
-            if (i != 0) {
-              return val.toLowerCase();
-            } else {
-              return val;
-            }
-          });
+          const formattedStatus = otherPersonStatus
+            .map((val, i) => {
+              if (i != 0) {
+                return val.toLowerCase();
+              } else {
+                return val;
+              }
+            })
+            .join("");
 
-          formattedStatus.join("");
+          const statusColor =
+            otherPerson.onlineStatus === "ONLINE"
+              ? "bg-[#23a55a]"
+              : otherPerson.onlineStatus === "ABSENT"
+                ? "bg-[#f0b232]"
+                : "bg-[#80848e]";
 
           return (
             <button
@@ -109,7 +116,9 @@ export default function FriendsList() {
               onClick={() => updatePage(otherPerson.id)}
             >
               <div className="w-12 h-12 bg-black rounded-full relative">
-                <div className="absolute right-0 bottom-0 bg-white w-3 h-3 rounded-full"></div>
+                <div
+                  className={`absolute right-0 bottom-0 ${statusColor} w-3 h-3 rounded-full`}
+                ></div>
               </div>
               <div className="flex flex-col text-start">
                 <h1

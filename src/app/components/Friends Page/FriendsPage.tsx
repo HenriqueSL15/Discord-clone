@@ -45,22 +45,30 @@ export default function FriendsPage() {
     friendships = [];
   }
 
-  const filteredFriendships = friendships?.filter(
-    (friendship: FriendshipWithUsers) => {
-      if (params[selectedOption] != "") {
-        if (params[selectedOption] == "PENDING") {
-          return (
-            friendship.status == params[selectedOption] &&
-            user?.id != friendship.senderId
-          );
-        } else {
-          return friendship.status == params[selectedOption];
-        }
+  const getFilteredFriendships = (param: string) => {
+    return friendships?.filter((friendship: FriendshipWithUsers) => {
+      const otherPerson =
+        friendship.sender.id === user?.id
+          ? friendship.receiver
+          : friendship.sender;
+
+      if (param === "ONLINE") {
+        return (
+          friendship.status === "ACCEPTED" &&
+          otherPerson.onlineStatus === "ONLINE"
+        );
+      } else if (param === "PENDING") {
+        return friendship.status === "PENDING" && user?.id !== friendship.senderId;
+      } else if (param === "BLOCKED") {
+        return friendship.status === "BLOCKED";
       } else {
-        return friendship.status != "PENDING" && friendship.status != "BLOCKED";
+        // "Todos"
+        return friendship.status !== "PENDING" && friendship.status !== "BLOCKED";
       }
-    },
-  );
+    });
+  };
+
+  const filteredFriendships = getFilteredFriendships(params[selectedOption]) || [];
 
   return (
     <div className="w-full bg-[#1b1c22] h-screen">
@@ -86,25 +94,7 @@ export default function FriendsPage() {
                 setSelectedOption={setSelectedOption}
                 id={i}
                 text={texts[i]}
-                number={
-                  friendships?.filter((friendship: FriendshipWithUsers) => {
-                    if (params[i] != "") {
-                      if (params[i] == "PENDING") {
-                        return (
-                          friendship.status == params[i] &&
-                          user?.id != friendship.senderId
-                        );
-                      } else {
-                        return friendship.status == params[i];
-                      }
-                    } else {
-                      return (
-                        friendship.status != "PENDING" &&
-                        friendship.status != "BLOCKED"
-                      );
-                    }
-                  }).length
-                }
+                number={getFilteredFriendships(params[i])?.length || 0}
               />
             );
           })}

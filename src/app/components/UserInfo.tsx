@@ -8,7 +8,6 @@ import SettingsButton from "./Sidebar/SettingsButton";
 export default function UserInfo() {
   return (
     <div className="w-full h-20 bg-[#0f0f13] p-1 rounded-lg flex">
-      {/* {modal == "settings" && <SettingsModal />} */}
       <UserInfoButton />
       <div className="text-white flex h-full items-center">
         <MicButton />

@@ -13,6 +13,7 @@ export default function MainContainer({
 }: {
   friendships: FriendshipWithUsers[] | null;
 }) {
+  const setModal = useUserStore((state) => state.setModal);
   const page = useUserStore((state) => state.page);
   const isSidebarOpen = useUserStore((state) => state.isSidebarOpen);
   const setSidebarOpen = useUserStore((state) => state.setSidebarOpen);
@@ -32,7 +33,10 @@ export default function MainContainer({
   const shouldShowSidebarMobile = isSidebarOpen && !activeRoom;
 
   return (
-    <div className="flex h-screen w-full relative overflow-hidden bg-[#1b1c22]">
+    <div
+      className="flex h-screen w-full relative overflow-hidden bg-[#1b1c22]"
+      onClick={() => setModal("")}
+    >
       <div
         className={`bg-[#16181d]/95 w-[280px] md:w-1/5 flex flex-col p-3 transition-all duration-300 z-40 h-screen fixed md:relative ${
           shouldShowSidebarMobile

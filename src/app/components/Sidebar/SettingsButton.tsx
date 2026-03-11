@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUserStore } from "../../store/useUserStore";
 import { useFloating, offset, flip, shift } from "@floating-ui/react";
 import { logoff } from "../../actions/auth";
@@ -9,9 +9,11 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export default function SettingsButton() {
+  const modal = useUserStore((state) => state.modal);
   const setModal = useUserStore((state) => state.setModal);
 
-  const [clicked, setClicked] = useState(false);
+  const setPage = useUserStore((state) => state.setPage);
+
   const { x, y, refs, strategy } = useFloating({
     placement: "bottom",
     middleware: [offset(10), flip(), shift()],
@@ -23,29 +25,31 @@ export default function SettingsButton() {
     <>
       <button
         ref={refs.setReference}
-        onClick={() => {
-          setClicked((prev) => !prev);
-
-          setModal("settings");
+        onClick={(e) => {
+          e.stopPropagation();
+          const newValue = modal == "settings" ? "" : "settings";
+          console.log(newValue);
+          setModal(newValue);
         }}
         className="relative rounded-lg transition-all h-2/3 flex items-center justify-center hover:bg-white/10 p-3 cursor-pointer"
       >
         <Settings />
       </button>
-      {clicked && (
+      {modal == "settings" && (
         <div
           ref={refs.setFloating}
-          className="w-20 h-20 bg-[#1b1c22] flex items-center justify-center rounded-lg p-5"
+          className="bg-[#1b1c22] flex items-center justify-center rounded-lg border border-[#16181e] shadow-lg"
           style={{
             position: strategy,
             top: y ?? 0,
             left: x ?? 0,
             zIndex: 50,
           }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <ul>
+          <ul className="text-start flex-col items-start flex gap-2 p-4 font-medium">
             <li
-              className="hover:bg-[#62667a]/50 cursor-pointer rounded-lg p-1 transition-all"
+              className="hover:bg-[#62667a]/50 w-full cursor-pointer p-2 rounded-lg transition-all"
               onClick={async () => {
                 const res = logoff();
 
@@ -53,6 +57,7 @@ export default function SettingsButton() {
                   loading: "Deslogando...",
                   success: () => {
                     router.push("/login");
+                    setModal("");
                     return "Deslogado";
                   },
                   error: (error) => {
@@ -62,6 +67,15 @@ export default function SettingsButton() {
               }}
             >
               Deslogar
+            </li>
+            <li
+              className="hover:bg-[#62667a]/50 cursor-pointer rounded-lg p-2 transition-all"
+              onClick={() => {
+                setModal("");
+                setPage("settings");
+              }}
+            >
+              Configurações da Conta
             </li>
           </ul>
         </div>

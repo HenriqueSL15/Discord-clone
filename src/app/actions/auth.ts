@@ -892,3 +892,94 @@ function extractPublicId(url: string): string | null {
 
   return match ? match[1] : null;
 }
+export async function updateUserInformation(data: {
+  email: string;
+  username: string;
+  newPassword: string;
+  previousPassword: string;
+}): Promise<UserInterface> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("session")?.value;
+
+    if (!token) {
+      throw new Error("Token not found");
+    }
+
+    const sessionData = await decrypt(token);
+    if (!sessionData || !sessionData.userId) {
+      throw new Error("Session not found");
+    }
+
+    const userId = sessionData.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new Error("User not found");
+
+    let updateData: any = {};
+    const isEmailDiff = data.email !== user.email;
+    const isUsernameDiff = data.username !== user.username;
+
+    const isTryingToChangePassword = data.newPassword.trim() != "";
+
+    if (isTryingToChangePassword) {
+      const isPasswordCorrect = await bcrypt.compare(
+        data.previousPassword,
+        user.password,
+      );
+
+      if (!isPasswordCorrect) {
+        throw new Error("Current password is incorrect");
+      }
+
+      if (data.previousPassword == data.newPassword) {
+        throw new Error("New password cannot be the same as the current one");
+      }
+
+      const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+      updateData.password = hashedPassword;
+    }
+
+    if (isEmailDiff) {
+      if (data.email.trim() == "") throw new Error("Email cannot be empty");
+
+      const emailExists = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (emailExists) throw new Error("This email is already in use");
+
+      updateData.email = data.email;
+    }
+
+    if (isUsernameDiff) {
+      if (data.username.trim() == "")
+        throw new Error("Username cannot be empty");
+
+      const userExists = await prisma.user.findUnique({
+        where: { username: data.username },
+      });
+      if (userExists) throw new Error("This username is already in use");
+
+      updateData.username = data.username;
+    }
+
+    if (Object.keys(updateData).length == 0)
+      throw new Error("Nothing was changed");
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        ...updateData,
+      },
+    });
+
+    const { password, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
+  } catch (err: any) {
+    throw new Error(err.message);
+  }
+}

@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { pusherClient } from "../lib/pusher-client";
 import { useUserStore } from "../store/useUserStore";
 import { FriendshipWithUsers } from "../types/Friendship";
+import UserInterface from "../types/User";
+import { Friendship } from "@prisma/client";
 
 export function PusherListener({ userId }: { userId: string }) {
   const user = useUserStore((state) => state.user);
@@ -105,6 +107,17 @@ export function PusherListener({ userId }: { userId: string }) {
         });
       },
     );
+
+    channel.bind("friend-updated", (data) => {
+      setFriendships((prev: FriendshipWithUsers[] | null) => {
+        if (!prev) return null;
+        return prev.map((f) => {
+          if (f.senderId == data.id) return { ...f, sender: data };
+          else if (f.receiverId == data.id) return { ...f, receiver: data };
+          else return f;
+        });
+      });
+    });
 
     return () => {
       channel.unbind_all();

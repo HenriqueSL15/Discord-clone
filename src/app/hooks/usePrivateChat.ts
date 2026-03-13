@@ -63,7 +63,8 @@ export function usePrivateChat(otherUserId: string) {
             channel.unbind("new-message");
             channel.bind("new-message", (data: MessageWithUsers) => {
               setMessages((prev) => {
-                if (prev.find((m) => m.id == data.id)) return prev;
+                if (prev.find((m) => m.id === "temporary"))
+                  return prev.map((m) => (m.id === "temporary" ? data : m));
                 return [...prev, data];
               });
             });
@@ -161,6 +162,7 @@ export function usePrivateChat(otherUserId: string) {
       setImages([]);
       setPreviewImage([]);
       setMessages((prev) => [...prev, temporaryMessage]);
+      console.log("Adicionei a mensagem temporária 2");
       const form = new FormData();
       images.forEach((image) => {
         form.append("images", image);
@@ -173,7 +175,6 @@ export function usePrivateChat(otherUserId: string) {
           },
         })
         .then((res) => {
-          console.log("Deu certo", res.data);
           return res.data.urls;
         })
         .catch((err) => console.log("Deu erro", err));
@@ -191,6 +192,7 @@ export function usePrivateChat(otherUserId: string) {
       setImages([]);
       setPreviewImage([]);
       setMessages((prev) => [...prev, temporaryMessage]);
+      console.log("Adicionei a mensagem temporária 1");
       res = await sendMessage(
         otherUserId as string,
         inputVal,
@@ -200,7 +202,6 @@ export function usePrivateChat(otherUserId: string) {
     }
 
     if ("error" in res!) {
-      console.log("deu erro");
       setMessages((prev) => prev.filter((m) => m.id != "temporary"));
       setImages(tempImages);
       setPreviewImage(tempPreviewImages);

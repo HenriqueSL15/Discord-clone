@@ -574,10 +574,14 @@ export async function changeFriendshipStatus(
             ? deletedFriendship.receiverId
             : deletedFriendship.senderId;
 
-        await pusherServer.trigger(`user-${otherUserId}`, "friendship-updated", {
-          action: "DELETE",
-          friendship: deletedFriendship,
-        });
+        await pusherServer.trigger(
+          `user-${otherUserId}`,
+          "friendship-updated",
+          {
+            action: "DELETE",
+            friendship: deletedFriendship,
+          },
+        );
       }
 
       return deletedFriendship;
@@ -709,14 +713,10 @@ export async function _updateUserStatus(
 
     const notifications = friendships.map((f) => {
       const targetId = f.receiverId == userId ? f.senderId : f.receiverId;
-      return pusherServer.trigger(
-        `user-${targetId}`,
-        "friend-status-changed",
-        {
-          userId,
-          status,
-        },
-      );
+      return pusherServer.trigger(`user-${targetId}`, "friend-status-changed", {
+        userId,
+        status,
+      });
     });
 
     await pusherServer.trigger(`user-${userId}`, "own-status-changed", {
@@ -976,8 +976,27 @@ export async function updateUserInformation(data: {
         ...updateData,
       },
     });
-
     const { password, ...userWithoutPassword } = updatedUser;
+
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+      },
+    });
+
+    const promises = friendships.map((f) => {
+      const otherId =
+        userWithoutPassword.id === f.senderId ? f.receiverId : f.senderId;
+
+      return pusherServer.trigger(
+        `user-${otherId}`,
+        "friend-updated",
+        userWithoutPassword,
+      );
+    });
+
+    await Promise.all(promises);
+
     return userWithoutPassword;
   } catch (err: any) {
     throw new Error(err.message);

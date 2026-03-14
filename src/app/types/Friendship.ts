@@ -10,6 +10,7 @@ export type FriendshipWithUsers = Prisma.FriendshipGetPayload<{
         createdAt: true;
         onlineStatus: true;
         lastOnline: true;
+        profilePicture: true;
       };
     };
     receiver: {
@@ -20,6 +21,7 @@ export type FriendshipWithUsers = Prisma.FriendshipGetPayload<{
         createdAt: true;
         onlineStatus: true;
         lastOnline: true;
+        profilePicture: true;
       };
     };
   };

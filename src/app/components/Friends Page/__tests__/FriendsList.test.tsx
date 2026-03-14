@@ -22,16 +22,48 @@ describe('FriendsList Component', () => {
       status: 'ACCEPTED',
       senderId: 'user-1',
       receiverId: 'user-2',
-      sender: { id: 'user-1', username: 'me' },
-      receiver: { id: 'user-2', username: 'friend-a' }
+      sender: {
+        id: 'user-1',
+        username: 'me',
+        email: 'me@test.com',
+        createdAt: new Date(),
+        profilePicture: 'default.png',
+        onlineStatus: 'ONLINE' as const,
+        lastOnline: new Date()
+      },
+      receiver: {
+        id: 'user-2',
+        username: 'friend-a',
+        email: 'friend-a@test.com',
+        createdAt: new Date(),
+        profilePicture: 'default.png',
+        onlineStatus: 'ONLINE' as const,
+        lastOnline: new Date()
+      }
     },
     {
       id: 'f2',
       status: 'PENDING',
       senderId: 'user-3',
       receiverId: 'user-1',
-      sender: { id: 'user-3', username: 'friend-b' },
-      receiver: { id: 'user-1', username: 'me' }
+      sender: {
+        id: 'user-3',
+        username: 'friend-b',
+        email: 'friend-b@test.com',
+        createdAt: new Date(),
+        profilePicture: 'default.png',
+        onlineStatus: 'ONLINE' as const,
+        lastOnline: new Date()
+      },
+      receiver: {
+        id: 'user-1',
+        username: 'me',
+        email: 'me@test.com',
+        createdAt: new Date(),
+        profilePicture: 'default.png',
+        onlineStatus: 'ONLINE' as const,
+        lastOnline: new Date()
+      }
     }
   ] as any
 
@@ -93,11 +125,29 @@ describe('FriendsList Component', () => {
   it('handles cases where user is the receiver in search and display', () => {
     const receiverFriendship = {
       id: 'f3',
-      status: 'ACCEPTED',
+      status: 'ACCEPTED' as const,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       senderId: 'user-2',
       receiverId: 'user-1',
-      sender: { id: 'user-2', username: 'friend-a' },
-      receiver: { id: 'user-1', username: 'me' }
+      sender: {
+        id: 'user-2',
+        username: 'friend-a',
+        email: 'friend-a@test.com',
+        createdAt: new Date(),
+        profilePicture: 'default.png',
+        onlineStatus: 'ONLINE' as const,
+        lastOnline: new Date()
+      },
+      receiver: {
+        id: 'user-1',
+        username: 'me',
+        email: 'me@test.com',
+        createdAt: new Date(),
+        profilePicture: 'default.png',
+        onlineStatus: 'ONLINE' as const,
+        lastOnline: new Date()
+      }
     }
     render(<FriendsList filteredFriendships={[receiverFriendship]} />)
     expect(screen.getByText('friend-a')).toBeInTheDocument()

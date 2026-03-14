@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { register } from "@/app/actions/auth";
 
 import { toast } from "sonner";
+import { useUserStore } from "@/app/store/useUserStore";
+import UserInterface from "@/app/types/User";
 
 export default function RegisterPage() {
   const [isHidden, setIsHidden] = useState(true);
+  const updateUser = useUserStore((state) => state.setUser);
   const router = useRouter();
 
   return (
@@ -27,8 +30,10 @@ export default function RegisterPage() {
 
             toast.promise(res, {
               loading: "Logando...",
-              success: (result) => {
+              success: (result: UserInterface) => {
+                updateUser(result);
                 router.push("/");
+
                 return "Sucesso ao se registrar!";
               },
               error: (error) => {

@@ -17,6 +17,7 @@ describe("Message Component", () => {
     createdAt: new Date(),
     lastOnline: new Date(),
     onlineStatus: "ONLINE",
+    profilePicture: "default.png",
   };
 
   const mockMessage: MessageWithUsers = {

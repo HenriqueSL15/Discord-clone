@@ -30,7 +30,7 @@ cloudinary.config({
  * formData.append('password', 'password123');
  * await register(formData);
  */
-export async function register(formData: FormData) {
+export async function register(formData: FormData): Promise<UserInterface> {
   const email = formData.get("email") as string;
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
@@ -67,6 +67,9 @@ export async function register(formData: FormData) {
 
     const cookieStore = await cookies();
     cookieStore.set("session", session, { expires, httpOnly: true });
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   } catch (err: any) {
     throw new Error(err.message);
   }
@@ -123,6 +126,7 @@ export async function addFriend(formData: FormData) {
             createdAt: true,
             onlineStatus: true,
             lastOnline: true,
+            profilePicture: true,
           },
         },
         receiver: {
@@ -133,6 +137,7 @@ export async function addFriend(formData: FormData) {
             createdAt: true,
             onlineStatus: true,
             lastOnline: true,
+            profilePicture: true,
           },
         },
       },
@@ -323,6 +328,7 @@ export async function getUserFriendships(): Promise<
             createdAt: true,
             lastOnline: true,
             onlineStatus: true,
+            profilePicture: true,
           },
         },
         receiver: {
@@ -333,6 +339,7 @@ export async function getUserFriendships(): Promise<
             createdAt: true,
             lastOnline: true,
             onlineStatus: true,
+            profilePicture: true,
           },
         },
       },
@@ -399,6 +406,7 @@ export async function getMessagesHistory(
             username: true,
             email: true,
             createdAt: true,
+            profilePicture: true,
           },
         },
         receiver: {
@@ -407,6 +415,7 @@ export async function getMessagesHistory(
             username: true,
             email: true,
             createdAt: true,
+            profilePicture: true,
           },
         },
       },
@@ -469,6 +478,7 @@ export async function sendMessage(
             username: true,
             email: true,
             createdAt: true,
+            profilePicture: true,
           },
         },
         receiver: {
@@ -477,6 +487,7 @@ export async function sendMessage(
             username: true,
             email: true,
             createdAt: true,
+            profilePicture: true,
           },
         },
       },
@@ -553,6 +564,7 @@ export async function changeFriendshipStatus(
               createdAt: true,
               onlineStatus: true,
               lastOnline: true,
+              profilePicture: true,
             },
           },
           receiver: {
@@ -563,6 +575,7 @@ export async function changeFriendshipStatus(
               createdAt: true,
               onlineStatus: true,
               lastOnline: true,
+              profilePicture: true,
             },
           },
         },
@@ -606,6 +619,7 @@ export async function changeFriendshipStatus(
             createdAt: true,
             onlineStatus: true,
             lastOnline: true,
+            profilePicture: true,
           },
         },
         receiver: {
@@ -616,6 +630,7 @@ export async function changeFriendshipStatus(
             createdAt: true,
             onlineStatus: true,
             lastOnline: true,
+            profilePicture: true,
           },
         },
       },
@@ -798,6 +813,7 @@ export async function updateMessage(
             username: true,
             email: true,
             createdAt: true,
+            profilePicture: true,
           },
         },
         receiver: {
@@ -806,6 +822,7 @@ export async function updateMessage(
             username: true,
             email: true,
             createdAt: true,
+            profilePicture: true,
           },
         },
       },

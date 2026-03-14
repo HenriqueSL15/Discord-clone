@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export default function SettingsButton() {
+  const updateUser = useUserStore((state) => state.setUser);
   const modal = useUserStore((state) => state.modal);
   const setModal = useUserStore((state) => state.setModal);
 
@@ -58,6 +59,8 @@ export default function SettingsButton() {
                   success: () => {
                     router.push("/login");
                     setModal("");
+                    setPage("friends");
+                    updateUser(null);
                     return "Deslogado";
                   },
                   error: (error) => {

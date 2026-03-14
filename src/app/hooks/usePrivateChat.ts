@@ -63,8 +63,14 @@ export function usePrivateChat(otherUserId: string) {
             channel.unbind("new-message");
             channel.bind("new-message", (data: MessageWithUsers) => {
               setMessages((prev) => {
-                if (prev.find((m) => m.id === "temporary"))
-                  return prev.map((m) => (m.id === "temporary" ? data : m));
+                if (prev.find((m) => m.id === data.id)) return prev;
+
+                const tempIndex = prev.findIndex((m) => m.id === "temporary");
+                if (tempIndex !== -1) {
+                  const newMessages = [...prev];
+                  newMessages[tempIndex] = data;
+                  return newMessages;
+                }
                 return [...prev, data];
               });
             });
@@ -162,14 +168,14 @@ export function usePrivateChat(otherUserId: string) {
       setImages([]);
       setPreviewImage([]);
       setMessages((prev) => [...prev, temporaryMessage]);
-      console.log("Adicionei a mensagem temporária 2");
+
       const form = new FormData();
       images.forEach((image) => {
         form.append("images", image);
       });
 
       const imagesURLs = await api
-        .post("/api/messageImages", form, {
+        .post("/api/sendImages", form, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -192,7 +198,7 @@ export function usePrivateChat(otherUserId: string) {
       setImages([]);
       setPreviewImage([]);
       setMessages((prev) => [...prev, temporaryMessage]);
-      console.log("Adicionei a mensagem temporária 1");
+
       res = await sendMessage(
         otherUserId as string,
         inputVal,

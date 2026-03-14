@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useUserStore } from "../store/useUserStore";
 export default function UserInfoButton() {
   const user = useUserStore((state) => state.user);
@@ -21,9 +22,18 @@ export default function UserInfoButton() {
         ? "bg-[#f0b232]"
         : "bg-[#80848e]";
 
+  if (!user) return null;
+
   return (
     <button className="flex gap-3 items-center hover:bg-[#23252d] w-1/2 h-full cursor-pointer transition-all rounded-lg">
       <div className="w-12 h-12 bg-black rounded-full relative">
+        <Image
+          src={user?.profilePicture}
+          width={100}
+          height={100}
+          alt="profilePicture"
+          className="absolute right-0 bottom-0 rounded-full"
+        />
         <div
           className={`absolute right-0 bottom-0 ${statusColor} w-3 h-3 rounded-full`}
         ></div>

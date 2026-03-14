@@ -4,6 +4,7 @@ import { useUserStore } from "../../store/useUserStore";
 import { FriendshipWithUsers } from "../../types/Friendship";
 import UserInterface from "@/app/types/User";
 import { getOtherUserInfo } from "@/app/actions/auth";
+import Image from "next/image";
 export default function FriendsList() {
   const user = useUserStore((state) => state.user);
   const friendships = useUserStore((state) => state.friendships);
@@ -116,6 +117,13 @@ export default function FriendsList() {
               onClick={() => updatePage(otherPerson.id)}
             >
               <div className="w-12 h-12 bg-black rounded-full relative">
+                <Image
+                  src={otherPerson?.profilePicture}
+                  width={100}
+                  height={100}
+                  alt="profilePicture"
+                  className="absolute right-0 bottom-0 rounded-full"
+                />
                 <div
                   className={`absolute right-0 bottom-0 ${statusColor} w-3 h-3 rounded-full`}
                 ></div>

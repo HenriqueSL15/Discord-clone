@@ -36,7 +36,7 @@ export function PusherListener({ userId }: { userId: string }) {
                 ...f,
                 sender: {
                   ...f.sender,
-                  onlineStatus: data.status as any,
+                  onlineStatus: data.status,
                   lastOnline:
                     data.status == "ONLINE" ? new Date() : f.sender.lastOnline,
                 },
@@ -48,7 +48,7 @@ export function PusherListener({ userId }: { userId: string }) {
                 ...f,
                 receiver: {
                   ...f.receiver,
-                  onlineStatus: data.status as any,
+                  onlineStatus: data.status,
                   lastOnline:
                     data.status == "ONLINE"
                       ? new Date()
@@ -108,7 +108,7 @@ export function PusherListener({ userId }: { userId: string }) {
       },
     );
 
-    channel.bind("friend-updated", (data) => {
+    channel.bind("friend-updated", (data: UserInterface) => {
       setFriendships((prev: FriendshipWithUsers[] | null) => {
         if (!prev) return null;
         return prev.map((f) => {

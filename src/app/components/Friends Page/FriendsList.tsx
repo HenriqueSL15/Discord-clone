@@ -4,6 +4,7 @@ import { useUserStore } from "../../store/useUserStore";
 import { FriendshipWithUsers } from "../../types/Friendship";
 import { X, Check } from "lucide-react";
 import { changeFriendshipStatus } from "../../actions/auth";
+import Image from "next/image";
 
 export default function FriendsList({
   filteredFriendships,
@@ -51,6 +52,17 @@ export default function FriendsList({
       />
       <div className="flex flex-col">
         {validFriendships?.map((friendship: FriendshipWithUsers, index) => {
+          const otherPerson =
+            friendship.sender.id == user?.id
+              ? friendship.receiver
+              : friendship.sender;
+
+          const statusColor =
+            otherPerson.onlineStatus === "ONLINE"
+              ? "bg-[#23a55a]"
+              : otherPerson.onlineStatus === "ABSENT"
+                ? "bg-[#f0b232]"
+                : "bg-[#80848e]";
           return (
             <button
               key={index}
@@ -68,8 +80,17 @@ export default function FriendsList({
                 }
               }}
             >
-              <div className="relative w-15 h-15 bg-black rounded-full">
-                <div className="absolute right-0 bottom-0 w-3 h-3 bg-white rounded-full"></div>
+              <div className="w-12 h-12 bg-black rounded-full relative">
+                <Image
+                  src={otherPerson?.profilePicture}
+                  width={100}
+                  height={100}
+                  alt="profilePicture"
+                  className="absolute right-0 bottom-0 rounded-full"
+                />
+                <div
+                  className={`absolute right-0 bottom-0 ${statusColor} w-3 h-3 rounded-full`}
+                ></div>
               </div>
               <div className="flex justify-between items-center flex-1">
                 <h1 className="text-xl text-white font-bold">

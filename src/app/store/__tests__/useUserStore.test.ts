@@ -19,7 +19,8 @@ describe('useUserStore', () => {
       email: 'test@test.com',
       createdAt: new Date(),
       lastOnline: new Date(),
-      onlineStatus: 'ONLINE' as const
+      onlineStatus: 'ONLINE' as const,
+      profilePicture: 'default.png'
     }
     useUserStore.getState().setUser(mockUser)
     expect(useUserStore.getState().user).toEqual(mockUser)

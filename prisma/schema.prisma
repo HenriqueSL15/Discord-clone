@@ -25,6 +25,8 @@ model User {
   password          String
   createdAt         DateTime          @default(now())
 
+  profilePicture    String            @default("https://res.cloudinary.com/dz4b2dabb/image/upload/v1773501304/default_akfhni.png")
+
   onlineStatus      OnlineStatus      @default(ONLINE)
   lastOnline        DateTime          @default(now())
 

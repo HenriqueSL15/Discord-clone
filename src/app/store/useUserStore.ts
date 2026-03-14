@@ -7,7 +7,7 @@ import UserInterface from "../types/User";
 
 interface UserState {
   user: UserInterface | null;
-  setUser: (user: UserInterface) => void;
+  setUser: (user: UserInterface | null) => void;
 
   friendships: FriendshipWithUsers[] | null;
   setFriendships: (
@@ -40,7 +40,7 @@ export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
       user: null as UserInterface | null,
-      setUser: (user: UserInterface) => set({ user }),
+      setUser: (user: UserInterface | null) => set({ user }),
 
       friendships: null as FriendshipWithUsers[] | null,
       setFriendships: (updater) =>
@@ -64,10 +64,10 @@ export const useUserStore = create<UserState>()(
       setVoiceChatToken: (token: string) => set({ voiceChatToken: token }),
 
       isMuted: false,
-      setIsMuted: (isMuted: boolean) => set({isMuted}),
+      setIsMuted: (isMuted: boolean) => set({ isMuted }),
 
       isSidebarOpen: false,
-      setSidebarOpen: (isSidebarOpen: boolean) => set({ isSidebarOpen })
+      setSidebarOpen: (isSidebarOpen: boolean) => set({ isSidebarOpen }),
     }),
     {
       name: "user-storage",

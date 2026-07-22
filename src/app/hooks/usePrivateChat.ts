@@ -74,6 +74,16 @@ export function usePrivateChat(otherUserId: string) {
                 return [...prev, data];
               });
             });
+
+            channel.bind("message-updated", (updatedMsg: MessageWithUsers) => {
+              setMessages((prev) =>
+                prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m)),
+              );
+            });
+
+            channel.bind("message-deleted", (deletedMsgId: string) => {
+              setMessages((prev) => prev.filter((m) => m.id !== deletedMsgId));
+            });
           }
         }
         if (res) setMessages(res);
@@ -122,7 +132,12 @@ export function usePrivateChat(otherUserId: string) {
       }),
     );
 
-    const res = await updateMessage(messageId, newMessage, newImages ?? []);
+    const res = await updateMessage(
+      messageId,
+      newMessage,
+      friendshipId,
+      newImages ?? [],
+    );
 
     if (res == null) return console.log("Res não existe");
     if ("error" in res) {
@@ -233,7 +248,7 @@ export function usePrivateChat(otherUserId: string) {
   const handleDeleteMessage = async (messageId: string) => {
     const allMessages = [...messages];
     setMessages((prev) => prev.filter((m) => m.id != messageId));
-    const res = await deleteMessage(messageId);
+    const res = await deleteMessage(messageId, friendshipId);
 
     if (!res) return console.log("Res não existe");
     if ("error" in res) {

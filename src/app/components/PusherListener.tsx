@@ -5,11 +5,8 @@ import { pusherClient } from "../lib/pusher-client";
 import { useUserStore } from "../store/useUserStore";
 import { FriendshipWithUsers } from "../types/Friendship";
 import UserInterface from "../types/User";
-import { Friendship } from "@prisma/client";
 
 export function PusherListener({ userId }: { userId: string }) {
-  const user = useUserStore((state) => state.user);
-  const setUser = useUserStore((state) => state.setUser);
   const setFriendships = useUserStore((state) => state.setFriendships);
 
   const setActiveRoom = useUserStore((state) => state.setActiveRoom);
@@ -65,7 +62,7 @@ export function PusherListener({ userId }: { userId: string }) {
 
     channel.bind("call-incoming", (data: { senderId: string }) => {
       const startPrivateChat = async (targetUserId: string) => {
-        const myId = user?.id;
+        const myId = userId;
         const roomId = [myId, targetUserId].sort().join("---");
 
         if (!myId) {
@@ -84,6 +81,7 @@ export function PusherListener({ userId }: { userId: string }) {
     });
 
     channel.bind("friend-request-received", (data: FriendshipWithUsers) => {
+      console.log("RECEBI O REQUEST");
       setFriendships((prev: FriendshipWithUsers[] | null) => {
         if (!prev) return [data];
         if (prev.find((f) => f.id === data.id)) return prev;
@@ -123,7 +121,7 @@ export function PusherListener({ userId }: { userId: string }) {
       channel.unbind_all();
       pusherClient.unsubscribe(channelName);
     };
-  }, [userId, setFriendships, setUser, setActiveRoom, user]);
+  }, [userId, setFriendships, setActiveRoom, setVoiceChatToken]);
 
   return null;
 }

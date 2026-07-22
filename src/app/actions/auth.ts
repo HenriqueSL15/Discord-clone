@@ -752,13 +752,15 @@ export async function _updateUserStatus(
  * Atualiza o conteúdo de uma mensagem enviada pelo usuário atualmente logado.
  * @param {string} messageId - O ID da mensagem a ser atualizada.
  * @param {string} newMessage - O novo conteúdo da mensagem.
+ * @param {string[]} newImages - As novas mensagens.
  * @returns {Promise<MessageWithUsers | null>} Retorna o objeto da mensagem atualizada ou nulo se o usuário não for o remetente ou ocorrer um erro.
  * @example
- * await updateMessage('message-id-123', 'Este é o novo conteúdo da mensagem.');
+ * await updateMessage('message-id-123', 'Este é o novo conteúdo da mensagem.', []);
  */
 export async function updateMessage(
   messageId: string,
   newMessage: string,
+  friendshipId: string,
   newImages: string[],
 ): Promise<MessageWithUsers | null> {
   const cookieStore = await cookies();
@@ -828,6 +830,14 @@ export async function updateMessage(
       },
     });
 
+    if (updatedMessage) {
+      await pusherServer.trigger(
+        `${friendshipId}`,
+        "message-updated",
+        updatedMessage,
+      );
+    }
+
     return updatedMessage;
   } catch (err) {
     console.log(err);
@@ -838,12 +848,14 @@ export async function updateMessage(
 /**
  * Exclui uma mensagem enviada pelo usuário atualmente logado.
  * @param {string} messageId - O ID da mensagem a ser excluída.
+ * @param {string} friendshipId - O ID da amizade
  * @returns {Promise<Message | null>} Retorna o objeto da mensagem excluída ou nulo se o usuário não for o remetente ou ocorrer um erro.
  * @example
  * await deleteMessage('message-id-123');
  */
 export async function deleteMessage(
   messageId: string,
+  friendshipId: string,
 ): Promise<Message | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
@@ -872,6 +884,8 @@ export async function deleteMessage(
     if (!deletedMessage) throw new Error("Não existe mensagem");
 
     deleteImagesFromCloud(deletedMessage.images);
+
+    await pusherServer.trigger(`${friendshipId}`, "message-deleted", messageId);
 
     return deletedMessage;
   } catch (err) {

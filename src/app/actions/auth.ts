@@ -12,6 +12,7 @@ import { pusherServer } from "../lib/pusher";
 import { FriendshipStatus, Message } from "@prisma/client";
 
 import { v2 as cloudinary } from "cloudinary";
+import api from "../api/api";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -928,6 +929,7 @@ export async function updateUserInformation(data: {
   username: string;
   newPassword: string;
   previousPassword: string;
+  profilePicture: File | string;
 }): Promise<UserInterface> {
   try {
     const cookieStore = await cookies();
@@ -953,7 +955,27 @@ export async function updateUserInformation(data: {
     const isEmailDiff = data.email !== user.email;
     const isUsernameDiff = data.username !== user.username;
 
+    const isTryingToChangeProfilePicture = data.profilePicture;
+
     const isTryingToChangePassword = data.newPassword.trim() != "";
+
+    if (isTryingToChangeProfilePicture) {
+      const form = new FormData();
+      form.append("images", data.profilePicture);
+
+      const imagesURLs = await api
+        .post("/api/sendImages", form, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((res) => {
+          return res.data.urls;
+        })
+        .catch((err) => console.log("Deu erro", err));
+
+      updateData.profilePicture = imagesURLs[0];
+    }
 
     if (isTryingToChangePassword) {
       const isPasswordCorrect = await bcrypt.compare(

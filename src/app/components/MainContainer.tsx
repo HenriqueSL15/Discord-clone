@@ -49,7 +49,7 @@ export default function MainContainer({
         <UserInfo />
       </div>
 
-      <div className={`w-full md:w-4/5 h-screen flex flex-col`}>
+      <div className={`w-full h-screen flex flex-col`}>
         <SelectedPage />
       </div>
 

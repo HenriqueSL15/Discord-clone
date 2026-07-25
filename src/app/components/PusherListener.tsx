@@ -5,6 +5,7 @@ import { pusherClient } from "../lib/pusher-client";
 import { useUserStore } from "../store/useUserStore";
 import { FriendshipWithUsers } from "../types/Friendship";
 import UserInterface from "../types/User";
+import { updateOnlineStatus } from "../actions/auth";
 
 export function PusherListener({ userId }: { userId: string }) {
   const setFriendships = useUserStore((state) => state.setFriendships);
@@ -14,11 +15,10 @@ export function PusherListener({ userId }: { userId: string }) {
 
   useEffect(() => {
     const channelName = `user-${userId}`;
-    console.log("Tentando se inscrever no canal:", channelName);
     const channel = pusherClient.subscribe(channelName);
 
-    channel.bind("pusher:subscription_succeeded", () => {
-      console.log("Inscrição confirmada no canal:", channelName);
+    channel.bind("pusher:subscription_succeeded", async () => {
+      await updateOnlineStatus("ONLINE");
     });
 
     channel.bind(

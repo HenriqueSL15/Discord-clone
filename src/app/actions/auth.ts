@@ -668,7 +668,12 @@ export async function changeFriendshipStatus(
  */
 export async function updateOnlineStatus(
   status: "ONLINE" | "ABSENT" | "OFFLINE",
+  id: string | undefined = undefined,
 ): Promise<UserInterface | null> {
+  if (id) {
+    return _updateUserStatus(id, status);
+  }
+
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 

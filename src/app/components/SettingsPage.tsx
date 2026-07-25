@@ -32,8 +32,6 @@ export default function SettingsPage() {
     profilePicture: "",
   });
 
-  console.log(user);
-
   return (
     <div className="flex flex-col gap-10 p-5 text-zinc-200 flex-1">
       <h1 className="text-3xl font-semibold">Configurações</h1>
